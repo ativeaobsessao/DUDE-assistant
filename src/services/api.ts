@@ -108,7 +108,7 @@ export async function getMedicationLogs(patientId: string, eventDate: string): P
 export async function createMealLog(log: Database['public']['Tables']['meal_logs']['Insert']) {
   const { data, error } = await supabase
     .from('meal_logs')
-    .insert(log)
+    .insert(log as any)
     .select()
     .single();
 
@@ -119,6 +119,7 @@ export async function createMealLog(log: Database['public']['Tables']['meal_logs
 export async function updateMealLog(id: string, log: Database['public']['Tables']['meal_logs']['Update']) {
   const { data, error } = await supabase
     .from('meal_logs')
+    // @ts-expect-error Supabase strict types fail here
     .update(log)
     .eq('id', id)
     .select()
@@ -131,7 +132,7 @@ export async function updateMealLog(id: string, log: Database['public']['Tables'
 export async function createMedicationLog(log: Database['public']['Tables']['medication_logs']['Insert']) {
   const { data, error } = await supabase
     .from('medication_logs')
-    .insert(log)
+    .insert(log as any)
     .select()
     .single();
 
@@ -142,6 +143,7 @@ export async function createMedicationLog(log: Database['public']['Tables']['med
 export async function updateMedicationLog(id: string, log: Database['public']['Tables']['medication_logs']['Update']) {
   const { data, error } = await supabase
     .from('medication_logs')
+    // @ts-expect-error Supabase strict types fail here
     .update(log)
     .eq('id', id)
     .select()
@@ -153,10 +155,28 @@ export async function updateMedicationLog(id: string, log: Database['public']['T
 
 // --- STORAGE ---
 
+export async function getPatientPhotoUrl(patientId: string, path: string): Promise<string | null> {
+  if (!path) return null;
+  const { data, error } = await supabase.storage.from('patient-profile').createSignedUrl(path, 60 * 60 * 24); // 24 hours
+  if (error) {
+    console.error('Error getting patient photo:', error);
+    return null;
+  }
+  return data.signedUrl;
+}
+
+export async function getMealPhotoUrl(path: string): Promise<string | null> {
+  if (!path) return null;
+  const { data, error } = await supabase.storage.from('meal-records').createSignedUrl(path, 60 * 60 * 24); // 24 hours
+  if (error) {
+    console.error('Error getting meal photo:', error);
+    return null;
+  }
+  return data.signedUrl;
+}
+
 export async function uploadMealPhoto(patientId: string, file: File, fileName: string) {
-  // Format: families/family_id/patients/patient_id/...
-  // For simplicity, we just use patient_id since RLS protects it anyway, but we should adhere to structure
-  // We can just use /patient_id/YYYY/MM/DD/filename
+  // We use patientId as the root folder for RLS checks
   const filePath = `${patientId}/${fileName}`;
   const { data, error } = await supabase
     .storage
@@ -165,4 +185,65 @@ export async function uploadMealPhoto(patientId: string, file: File, fileName: s
 
   if (error) throw error;
   return data;
+}
+
+// --- SETUP & ROUTINE MUTATIONS ---
+
+export async function createPatient(patient: Database['public']['Tables']['patients']['Insert']) {
+  const { data, error } = await supabase.from('patients').insert(patient as any).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updatePatient(id: string, patient: Database['public']['Tables']['patients']['Update']) {
+  const { data, error } = await supabase.from('patients').update(patient as any).eq('id', id).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function uploadPatientPhoto(patientId: string, file: File, fileName: string) {
+  const filePath = `${patientId}/${fileName}`;
+  const { data, error } = await supabase.storage.from('patient-profile').upload(filePath, file, { upsert: true });
+  if (error) throw error;
+  return data;
+}
+
+export async function updateMealConfig(id: string, config: Database['public']['Tables']['meal_configs']['Update']) {
+  const { data, error } = await supabase.from('meal_configs').update(config as any).eq('id', id).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateMedicationPeriod(id: string, period: Database['public']['Tables']['medication_periods']['Update']) {
+  const { data, error } = await supabase.from('medication_periods').update(period as any).eq('id', id).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function createMedication(med: Database['public']['Tables']['medications']['Insert']) {
+  const { data, error } = await supabase.from('medications').insert(med as any).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateMedication(id: string, med: Database['public']['Tables']['medications']['Update']) {
+  const { data, error } = await supabase.from('medications').update(med as any).eq('id', id).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function seedInitialRoutine(patientId: string) {
+  await supabase.from('meal_configs').insert([
+    { patient_id: patientId, name: 'Café da manhã', type: 'breakfast', scheduled_time: '08:00', display_order: 1 },
+    { patient_id: patientId, name: 'Almoço', type: 'lunch', scheduled_time: '12:30', display_order: 2 },
+    { patient_id: patientId, name: 'Lanche da tarde', type: 'snack', scheduled_time: '16:00', display_order: 3 },
+    { patient_id: patientId, name: 'Jantar', type: 'dinner', scheduled_time: '19:30', display_order: 4 },
+  ] as any);
+
+  await supabase.from('medication_periods').insert([
+    { patient_id: patientId, name: 'Antes do café', scheduled_time: '07:30', display_order: 1 },
+    { patient_id: patientId, name: 'Depois do café', scheduled_time: '08:30', display_order: 2 },
+    { patient_id: patientId, name: 'Depois do almoço', scheduled_time: '13:00', display_order: 3 },
+    { patient_id: patientId, name: 'Depois do jantar', scheduled_time: '20:00', display_order: 4 },
+  ] as any);
 }
