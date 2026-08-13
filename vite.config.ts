@@ -17,20 +17,23 @@ export default defineConfig(() => {
           short_name: 'DUDE',
           description: 'Acompanhamento da rotina diária',
           theme_color: '#ffffff',
-          background_color: '#f9fafb',
+          background_color: '#ffffff',
           display: 'standalone',
           orientation: 'portrait',
           start_url: '/',
+          scope: '/',
           icons: [
             {
-              src: 'icon-192x192.png',
+              src: '/icon-192x192.png',
               sizes: '192x192',
-              type: 'image/png'
+              type: 'image/png',
+              purpose: 'any maskable'
             },
             {
-              src: 'icon-512x512.png',
+              src: '/icon-512x512.png',
               sizes: '512x512',
-              type: 'image/png'
+              type: 'image/png',
+              purpose: 'any maskable'
             }
           ]
         }

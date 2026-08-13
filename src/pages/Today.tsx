@@ -226,7 +226,7 @@ export function TodayScreen({ onTabChange }: { onTabChange?: (tab: 'today' | 'hi
     <MainLayout activeTab="today" onTabChange={onTabChange}>
       <div className="max-w-md mx-auto w-full">
         {/* Header */}
-        <div className="bg-white px-6 pt-12 pb-6 sticky top-0 z-10 border-b border-gray-100/50 backdrop-blur-xl">
+        <div className="bg-white px-6 pt-12 pb-6 sticky top-0 z-30 border-b border-gray-100/50 backdrop-blur-xl">
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl font-bold tracking-tight text-gray-900">DUDE</h1>
             <button 
