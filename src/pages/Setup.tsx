@@ -46,7 +46,6 @@ export function SetupScreen({ onComplete }: SetupScreenProps) {
       const patientData: any = {
         family_id: profile.family_id,
         name: name.trim(),
-        created_by: profile.id,
       };
 
       const patient = await createPatient(patientData);
