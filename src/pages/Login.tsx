@@ -5,23 +5,40 @@ import { Input } from '../components/ui/Input';
 import { Spinner } from '../components/ui/Spinner';
 
 export function LoginScreen() {
+  const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+    setSuccessMsg('');
     setLoading(true);
 
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    if (isSignUp) {
+      const { error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+      });
 
-    if (authError) {
-      setError('Não foi possível entrar. Verifique seu e-mail e senha.');
+      if (authError) {
+        setError(authError.message || 'Não foi possível criar a conta.');
+      } else {
+        setSuccessMsg('Conta criada! Você já pode entrar.');
+        setIsSignUp(false);
+      }
+    } else {
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (authError) {
+        setError('Não foi possível entrar. Verifique seu e-mail e senha.');
+      }
     }
     setLoading(false);
   }
@@ -35,14 +52,23 @@ export function LoginScreen() {
             {/* Generic placeholder since we don't know the family yet */}
             <span className="text-4xl text-gray-400">👵</span>
           </div>
-          <h2 className="mt-4 text-xl font-semibold text-gray-900">Entrar na Família</h2>
-          <p className="mt-2 text-sm text-gray-500">Como está a vó hoje?</p>
+          <h2 className="mt-4 text-xl font-semibold text-gray-900">
+            {isSignUp ? 'Criar Nova Conta' : 'Entrar na Família'}
+          </h2>
+          <p className="mt-2 text-sm text-gray-500">
+            {isSignUp ? 'Cadastre-se para começar' : 'Como está a vó hoje?'}
+          </p>
         </div>
 
         <form className="space-y-6" onSubmit={handleLogin}>
           {error && (
             <div className="rounded-xl bg-red-50 p-4 text-sm text-red-700">
               {error}
+            </div>
+          )}
+          {successMsg && (
+            <div className="rounded-xl bg-green-50 p-4 text-sm text-green-700">
+              {successMsg}
             </div>
           )}
           
@@ -68,8 +94,22 @@ export function LoginScreen() {
             className="w-full" 
             disabled={loading}
           >
-            {loading ? <Spinner className="text-white" /> : 'Entrar'}
+            {loading ? <Spinner className="text-white" /> : (isSignUp ? 'Criar conta' : 'Entrar')}
           </Button>
+
+          <div className="text-sm">
+            <button
+              type="button"
+              onClick={() => {
+                setIsSignUp(!isSignUp);
+                setError('');
+                setSuccessMsg('');
+              }}
+              className="text-gray-500 hover:text-gray-900 font-medium"
+            >
+              {isSignUp ? 'Já possui conta? Entre aqui' : 'Ainda não tem conta? Crie aqui'}
+            </button>
+          </div>
         </form>
       </div>
     </div>
