@@ -146,6 +146,8 @@ CREATE POLICY "Users can view their own family" ON families
   FOR SELECT USING (id = get_current_family_id());
 
 -- Policies for Profiles
+CREATE POLICY "Users can view their own profile" ON profiles
+  FOR SELECT USING (id = auth.uid());
 CREATE POLICY "Users can view profiles in their family" ON profiles
   FOR SELECT USING (family_id = get_current_family_id());
 CREATE POLICY "Users can update their own profile" ON profiles

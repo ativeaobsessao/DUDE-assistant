@@ -45,9 +45,12 @@ export default function App() {
         } else {
           setNeedsSetup(false);
         }
+      } else {
+        setNeedsSetup(true); // Force setup if profile is missing
       }
     } catch (e) {
       console.error(e);
+      setNeedsSetup(true); // Fallback to setup if there's an error
     } finally {
       setLoading(false);
     }

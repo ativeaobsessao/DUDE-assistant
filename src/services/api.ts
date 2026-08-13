@@ -26,7 +26,7 @@ export async function getCurrentProfile(): Promise<Profile | null> {
     .from('profiles')
     .select('*')
     .eq('id', user.id)
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data;
@@ -39,7 +39,7 @@ export async function getPatient(familyId: string): Promise<Patient | null> {
     .from('patients')
     .select('*')
     .eq('family_id', familyId)
-    .single();
+    .maybeSingle();
 
   // If there are multiple patients, we might want to return a list, but MVP has one.
   if (error) throw error;
