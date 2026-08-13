@@ -208,8 +208,20 @@ export async function uploadPatientPhoto(patientId: string, file: File, fileName
   return data;
 }
 
+export async function createMealConfig(config: Database['public']['Tables']['meal_configs']['Insert']) {
+  const { data, error } = await supabase.from('meal_configs').insert(config as any).select().single();
+  if (error) throw error;
+  return data;
+}
+
 export async function updateMealConfig(id: string, config: Database['public']['Tables']['meal_configs']['Update']) {
   const { data, error } = await supabase.from('meal_configs').update(config as any).eq('id', id).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function createMedicationPeriod(period: Database['public']['Tables']['medication_periods']['Insert']) {
+  const { data, error } = await supabase.from('medication_periods').insert(period as any).select().single();
   if (error) throw error;
   return data;
 }

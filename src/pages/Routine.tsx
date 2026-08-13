@@ -29,8 +29,8 @@ export function RoutineScreen({ onTabChange }: RoutineScreenProps) {
   // Modals state
   const [isPatientModalOpen, setIsPatientModalOpen] = useState(false);
   
-  const [editingTimeEntity, setEditingTimeEntity] = useState<any | null>(null);
-  const [editingTimeType, setEditingTimeType] = useState<'meal' | 'period'>('meal');
+  const [editingTimeEntity, setEditingTimeEntity] = useState<any | undefined>(undefined);
+  const [editingTimeType, setEditingTimeType] = useState<'meal' | 'period' | undefined>(undefined);
   
   const [editingMedication, setEditingMedication] = useState<any | null>(null);
   const [defaultPeriodForMed, setDefaultPeriodForMed] = useState<string>('');
@@ -87,7 +87,8 @@ export function RoutineScreen({ onTabChange }: RoutineScreenProps) {
   };
 
   const handleTimeSuccess = () => {
-    setEditingTimeEntity(null);
+    setEditingTimeEntity(undefined);
+    setEditingTimeType(undefined);
     showToast('Alterações salvas.');
     loadData();
   };
@@ -155,7 +156,18 @@ export function RoutineScreen({ onTabChange }: RoutineScreenProps) {
 
         {/* Meals Section */}
         <section className="space-y-4">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 ml-1">Refeições</h3>
+          <div className="flex items-center justify-between ml-1">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400">Refeições</h3>
+            <button 
+              onClick={() => {
+                setEditingTimeType('meal');
+                setEditingTimeEntity(null);
+              }}
+              className="text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-colors flex items-center"
+            >
+              <Plus className="w-3 h-3 mr-1" /> Adicionar
+            </button>
+          </div>
           <div className="space-y-3">
             {meals.map(meal => (
               <button 
@@ -178,7 +190,18 @@ export function RoutineScreen({ onTabChange }: RoutineScreenProps) {
 
         {/* Medication Periods Section */}
         <section className="space-y-8">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 ml-1">Medicamentos</h3>
+          <div className="flex items-center justify-between ml-1">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400">Medicamentos</h3>
+            <button 
+              onClick={() => {
+                setEditingTimeType('period');
+                setEditingTimeEntity(null);
+              }}
+              className="text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-colors flex items-center"
+            >
+              <Plus className="w-3 h-3 mr-1" /> Adicionar Período
+            </button>
+          </div>
           
           <div className="space-y-6">
             {periods.map(period => {
@@ -254,10 +277,14 @@ export function RoutineScreen({ onTabChange }: RoutineScreenProps) {
       />
 
       <TimeEditModal 
-        isOpen={!!editingTimeEntity}
-        onClose={() => setEditingTimeEntity(null)}
+        isOpen={editingTimeType !== undefined}
+        onClose={() => {
+          setEditingTimeEntity(undefined);
+          setEditingTimeType(undefined);
+        }}
         entity={editingTimeEntity}
-        type={editingTimeType}
+        patientId={patient?.id}
+        type={editingTimeType as 'meal' | 'period'}
         onSuccess={handleTimeSuccess}
       />
 
