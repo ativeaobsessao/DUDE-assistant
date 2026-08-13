@@ -55,19 +55,21 @@ export function PatientEditModal({ isOpen, onClose, patient, currentPhotoUrl, on
     setError('');
 
     try {
-      let photoPath = patient.photo_url;
+      const updateData: any = {
+        name: name.trim(),
+      };
 
       if (photoFile) {
         const compressed = await compressImage(photoFile);
         const fileName = `${Date.now()}.jpg`;
         const uploadData = await uploadPatientPhoto(patient.id, compressed, fileName);
-        photoPath = uploadData.path;
+        updateData.photo_url = uploadData.path;
+      } else if (photoPreview === null) {
+        // If there is no file and preview is explicitly cleared (null), remove the photo
+        updateData.photo_url = null;
       }
 
-      await updatePatient(patient.id, {
-        name: name.trim(),
-        photo_url: photoPath,
-      });
+      await updatePatient(patient.id, updateData);
 
       onSuccess();
     } catch (err) {
