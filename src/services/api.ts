@@ -191,7 +191,18 @@ export async function uploadMealPhoto(patientId: string, file: File, fileName: s
 
 export async function createPatient(patient: Database['public']['Tables']['patients']['Insert']) {
   const { data, error } = await supabase.from('patients').insert(patient as any).select().single();
-  if (error) throw error;
+  if (error) {
+    console.error("=== ERRO AO SALVAR PACIENTE ===");
+    console.error("Operação: INSERT");
+    console.error("Tabela: patients");
+    console.error("Payload:", JSON.stringify(patient, null, 2));
+    console.error("Código Supabase:", error.code);
+    console.error("Mensagem:", error.message);
+    console.error("Detalhes:", error.details);
+    console.error("Dica (Hint):", error.hint);
+    console.error("===============================");
+    throw error;
+  }
   return data;
 }
 
