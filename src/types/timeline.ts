@@ -12,6 +12,7 @@ export interface MealEventData extends TimelineEventBase {
   type: 'meal';
   mealConfig: any; // MealConfig
   log?: any; // MealLog
+  photoSignedUrl?: string | null;
 }
 
 export interface MedicationEventData extends TimelineEventBase {

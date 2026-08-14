@@ -27,7 +27,7 @@ export function MealModal({ isOpen, onClose, event, patientId, profileId, eventD
   const [description, setDescription] = useState(event.log?.description || '');
   const [notes, setNotes] = useState(event.log?.notes || '');
   const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(event.photoSignedUrl || null);
   const [showPhotoMenu, setShowPhotoMenu] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -49,16 +49,20 @@ export function MealModal({ isOpen, onClose, event, patientId, profileId, eventD
     
     try {
       let photoUrl = event.log?.photo_url || null;
+      
+      if (!photoPreview && !photoFile) {
+        photoUrl = null;
+      }
 
       if (photoFile) {
         try {
-          const compressed = await compressImage(photoFile);
+          const compressed = await compressImage(photoFile, 1920); // Better quality
           const fileName = `${eventDate}_${event.id}_${Date.now()}.jpg`;
           const uploadData = await uploadMealPhoto(patientId, compressed, fileName);
           photoUrl = uploadData.path;
         } catch (uploadErr) {
           console.error("Photo upload failed:", uploadErr);
-          // Don't fail the whole save, just proceed without new photo or keep old one
+          throw new Error("Falha ao enviar a foto da refeição. Verifique sua conexão e tente novamente.");
         }
       }
 

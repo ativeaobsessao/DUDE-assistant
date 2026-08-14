@@ -67,7 +67,7 @@ export function TimelineItem({ event, onClick }: TimelineItemProps) {
       <button 
         onClick={onClick}
         className={cn(
-          "w-[calc(100%-3rem)] p-4 rounded-2xl border text-left transition-all active:scale-[0.98]",
+          "w-[calc(100%-3rem)] rounded-2xl border text-left transition-all active:scale-[0.98] overflow-hidden",
           {
             'bg-white border-gray-100 hover:border-gray-200 shadow-sm': event.status === 'waiting',
             'bg-yellow-50/50 border-yellow-100 hover:border-yellow-200': event.status === 'pending',
@@ -76,30 +76,37 @@ export function TimelineItem({ event, onClick }: TimelineItemProps) {
           }
         )}
       >
-        <div className="flex justify-between items-start mb-2">
-          <div>
-            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 block">
-              {formatTime(event.time)}
-            </span>
-            <h4 className="font-semibold text-gray-900">{event.title}</h4>
+        {event.type === 'meal' && event.photoSignedUrl && (
+          <div className="w-full aspect-[4/3] bg-gray-100 relative">
+            <img src={event.photoSignedUrl} alt={event.title} className="w-full h-full object-cover" />
           </div>
-          <Badge variant={
-            event.status === 'confirmed' ? 'confirmed' : 
-            event.status === 'pending' ? 'pending' : 
-            event.status === 'attention' ? 'attention' : 
-            (event.type === 'meal' && event.log?.consumption_status === 'none' ? 'attention' : 'waiting')
-          }>
-            {badgeLabel}
-          </Badge>
+        )}
+        <div className="p-4">
+          <div className="flex justify-between items-start mb-2">
+            <div>
+              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 block">
+                {formatTime(event.time)}
+              </span>
+              <h4 className="font-semibold text-gray-900">{event.title}</h4>
+            </div>
+            <Badge variant={
+              event.status === 'confirmed' ? 'confirmed' : 
+              event.status === 'pending' ? 'pending' : 
+              event.status === 'attention' ? 'attention' : 
+              (event.type === 'meal' && event.log?.consumption_status === 'none' ? 'attention' : 'waiting')
+            }>
+              {badgeLabel}
+            </Badge>
+          </div>
+          
+          {subLabel && (
+            <p className="text-sm text-gray-600 mt-1">{subLabel}</p>
+          )}
+          
+          {event.type === 'meal' && event.log?.description && (
+            <p className="text-sm text-gray-500 mt-2 truncate">"{event.log.description}"</p>
+          )}
         </div>
-        
-        {subLabel && (
-          <p className="text-sm text-gray-600 mt-1">{subLabel}</p>
-        )}
-        
-        {event.type === 'meal' && event.log?.description && (
-          <p className="text-sm text-gray-500 mt-2 truncate">"{event.log.description}"</p>
-        )}
       </button>
     </div>
   );

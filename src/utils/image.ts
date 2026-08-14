@@ -26,7 +26,7 @@ export async function compressImage(file: File, maxWidth = 1024): Promise<File> 
           } else {
             resolve(file); // Fallback
           }
-        }, 'image/jpeg', 0.7); // 70% quality
+        }, 'image/jpeg', 0.9); // 90% quality
       };
       img.onerror = reject;
     };

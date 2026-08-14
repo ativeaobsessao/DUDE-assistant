@@ -8,7 +8,8 @@ import {
   getMedications,
   getMealLogs,
   getMedicationLogs,
-  getPatientPhotoUrl
+  getPatientPhotoUrl,
+  getMealPhotoUrl
 } from '../services/api';
 import { supabase } from '../services/supabase';
 import { getLocalDateString, getCurrentLocalTime, formatFriendlyDate, getWeekdayName, formatTime } from '../utils/date';
@@ -78,8 +79,13 @@ export function TodayScreen({ onTabChange }: { onTabChange?: (tab: 'today' | 'hi
         const log = mealLogs.find(l => l.meal_config_id === meal.id);
         let status: 'waiting' | 'pending' | 'confirmed' = 'waiting';
         
+        let photoSignedUrl = null;
+
         if (log) {
           status = 'confirmed';
+          if (log.photo_url) {
+            photoSignedUrl = await getMealPhotoUrl(log.photo_url);
+          }
         } else if (meal.scheduled_time <= currentTime) {
           status = 'pending';
         }
@@ -91,7 +97,8 @@ export function TodayScreen({ onTabChange }: { onTabChange?: (tab: 'today' | 'hi
           title: meal.name,
           status,
           mealConfig: meal,
-          log
+          log,
+          photoSignedUrl
         });
       }
 
