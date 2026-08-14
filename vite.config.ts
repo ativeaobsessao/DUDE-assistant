@@ -11,7 +11,7 @@ export default defineConfig(() => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'icon-192x192.png', 'icon-512x512.png'],
+        includeAssets: ['favicon-96x96.png', 'apple-touch.png', 'web-app-manifest-192x192.png', 'web-app-manifest-512x512.png'],
         manifest: {
           name: 'DUDE',
           short_name: 'DUDE',
@@ -24,13 +24,13 @@ export default defineConfig(() => {
           scope: '/',
           icons: [
             {
-              src: '/icon-192x192.png',
+              src: '/web-app-manifest-192x192.png',
               sizes: '192x192',
               type: 'image/png',
               purpose: 'any maskable'
             },
             {
-              src: '/icon-512x512.png',
+              src: '/web-app-manifest-512x512.png',
               sizes: '512x512',
               type: 'image/png',
               purpose: 'any maskable'
