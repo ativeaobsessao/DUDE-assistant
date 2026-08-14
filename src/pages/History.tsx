@@ -98,7 +98,7 @@ export function HistoryScreen({ onTabChange }: { onTabChange?: (tab: 'today' | '
         const mealConfig = log.meal_config || { name: 'Refeição', scheduled_time: log.meal_time || '00:00:00' };
 
         groups[dateStr].push({
-          id: log.meal_config_id,
+          id: log.meal_config_id || log.id,
           type: 'meal',
           time: log.meal_time || mealConfig.scheduled_time || '00:00:00',
           title: mealConfig.name,
@@ -113,7 +113,9 @@ export function HistoryScreen({ onTabChange }: { onTabChange?: (tab: 'today' | '
       
       for (const log of medLogs) {
         const dateStr = log.event_date;
-        const periodId = log.medication_period_id;
+        const periodId = log.medication?.medication_period_id;
+        
+        if (!periodId) continue;
         
         if (!medLogsByDateAndPeriod[dateStr]) medLogsByDateAndPeriod[dateStr] = {};
         if (!medLogsByDateAndPeriod[dateStr][periodId]) medLogsByDateAndPeriod[dateStr][periodId] = [];
@@ -126,7 +128,7 @@ export function HistoryScreen({ onTabChange }: { onTabChange?: (tab: 'today' | '
         
         for (const periodId of Object.keys(medLogsByDateAndPeriod[dateStr])) {
           const logs = medLogsByDateAndPeriod[dateStr][periodId];
-          const period = logs[0].period || { id: periodId, time: '00:00:00' };
+          const period = logs[0].medication?.period || { id: periodId, time: '00:00:00' };
           const medications = logs.map(l => l.medication).filter(Boolean);
           
           groups[dateStr].push({

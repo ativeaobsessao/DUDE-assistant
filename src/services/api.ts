@@ -99,7 +99,7 @@ export async function getHistoricalMealLogs(patientId: string, beforeDate: strin
 export async function getHistoricalMedicationLogs(patientId: string, beforeDate: string): Promise<any[]> {
   const { data, error } = await supabase
     .from('medication_logs')
-    .select('*, medication:medications(*), period:medication_periods(*)')
+    .select('*, medication:medications(*, period:medication_periods(*))')
     .eq('patient_id', patientId)
     .lt('event_date', beforeDate)
     .order('event_date', { ascending: false })
