@@ -113,12 +113,8 @@ export async function createMealLog(log: Database['public']['Tables']['meal_logs
     .single();
 
   if (error) {
-    if (error.code === 'PGRST204' && 'meal_time' in log) {
-      console.warn("A coluna 'meal_time' ainda não existe no banco (PGRST204). Rode a migração SQL. Salvando sem o horário temporariamente...");
-      const { meal_time, ...logWithoutTime } = log as any;
-      const retry = await supabase.from('meal_logs').insert(logWithoutTime).select('*, creator:profiles!meal_logs_created_by_fkey(name)').single();
-      if (retry.error) throw retry.error;
-      return retry.data;
+    if (error.code === 'PGRST204') {
+      console.error("ERRO CRÍTICO: A coluna 'meal_time' não existe no banco. É necessário rodar a migration 0004_add_meal_time.sql no Supabase.");
     }
     throw error;
   }
@@ -135,12 +131,8 @@ export async function updateMealLog(id: string, log: Database['public']['Tables'
     .single();
 
   if (error) {
-    if (error.code === 'PGRST204' && 'meal_time' in log) {
-      console.warn("A coluna 'meal_time' ainda não existe no banco (PGRST204). Rode a migração SQL. Atualizando sem o horário temporariamente...");
-      const { meal_time, ...logWithoutTime } = log as any;
-      const retry = await supabase.from('meal_logs').update(logWithoutTime).eq('id', id).select('*, creator:profiles!meal_logs_created_by_fkey(name)').single();
-      if (retry.error) throw retry.error;
-      return retry.data;
+    if (error.code === 'PGRST204') {
+      console.error("ERRO CRÍTICO: A coluna 'meal_time' não existe no banco. É necessário rodar a migration 0004_add_meal_time.sql no Supabase.");
     }
     throw error;
   }

@@ -27,11 +27,12 @@ export function MealModal({ isOpen, onClose, event, patientId, profileId, eventD
   const [description, setDescription] = useState(event.log?.description || '');
   const [notes, setNotes] = useState(event.log?.notes || '');
   
+  const now = new Date();
+  const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+  
   const initialTime = event.log?.meal_time 
     ? event.log.meal_time.substring(0, 5)
-    : event.mealConfig?.scheduled_time 
-      ? event.mealConfig.scheduled_time.substring(0, 5)
-      : '';
+    : currentTime;
   const [mealTime, setMealTime] = useState(initialTime);
 
   const [photoFile, setPhotoFile] = useState<File | null>(null);

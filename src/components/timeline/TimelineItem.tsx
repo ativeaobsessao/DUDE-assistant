@@ -86,7 +86,7 @@ export function TimelineItem({ event, onClick }: TimelineItemProps) {
             <div>
               {event.type === 'meal' && event.status === 'confirmed' && event.log ? (
                 <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 block">
-                  {event.log.meal_time ? formatTime(event.log.meal_time) : formatTime(event.time)} Refeição realizada
+                  {event.log.meal_time ? `${formatTime(event.log.meal_time)} Refeição realizada` : 'Horário não informado'}
                 </span>
               ) : (
                 <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 block">
@@ -117,7 +117,7 @@ export function TimelineItem({ event, onClick }: TimelineItemProps) {
             <div className="mt-4 pt-3 border-t border-gray-900/5 flex flex-col space-y-0.5">
               <div className="flex items-center text-xs text-gray-500">
                 <span className="mr-1.5 opacity-70">👤</span>
-                <span className="font-medium text-gray-700">{event.log.creator?.name || 'Familiar'}</span>
+                <span className="font-medium text-gray-700">Registrado por {event.log.creator?.name || 'Familiar'}</span>
               </div>
               <div className="text-[11px] text-gray-400 pl-5">
                 Registrado às {new Date(event.log.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
