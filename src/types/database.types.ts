@@ -202,6 +202,7 @@ export interface Database {
           description: string | null
           notes: string | null
           photo_url: string | null
+          meal_time: string | null
           created_by: string
           created_at: string
           updated_by: string
@@ -216,6 +217,7 @@ export interface Database {
           description?: string | null
           notes?: string | null
           photo_url?: string | null
+          meal_time?: string | null
           created_by: string
           created_at?: string
           updated_by: string
@@ -230,6 +232,7 @@ export interface Database {
           description?: string | null
           notes?: string | null
           photo_url?: string | null
+          meal_time?: string | null
           created_by?: string
           created_at?: string
           updated_by?: string

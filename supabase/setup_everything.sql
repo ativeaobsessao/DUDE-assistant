@@ -82,6 +82,7 @@ CREATE TABLE meal_logs (
   description TEXT,
   notes TEXT,
   photo_url TEXT,
+  meal_time TIME,
   created_by UUID NOT NULL REFERENCES profiles(id),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_by UUID NOT NULL REFERENCES profiles(id),

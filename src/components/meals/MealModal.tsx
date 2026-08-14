@@ -26,6 +26,14 @@ export function MealModal({ isOpen, onClose, event, patientId, profileId, eventD
   );
   const [description, setDescription] = useState(event.log?.description || '');
   const [notes, setNotes] = useState(event.log?.notes || '');
+  
+  const initialTime = event.log?.meal_time 
+    ? event.log.meal_time.substring(0, 5)
+    : event.mealConfig?.scheduled_time 
+      ? event.mealConfig.scheduled_time.substring(0, 5)
+      : '';
+  const [mealTime, setMealTime] = useState(initialTime);
+
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(event.photoSignedUrl || null);
   const [showPhotoMenu, setShowPhotoMenu] = useState(false);
@@ -74,6 +82,7 @@ export function MealModal({ isOpen, onClose, event, patientId, profileId, eventD
         description: description || null,
         notes: notes || null,
         photo_url: photoUrl,
+        meal_time: mealTime ? `${mealTime}:00` : null,
         updated_by: profileId,
       };
 
@@ -144,6 +153,15 @@ export function MealModal({ isOpen, onClose, event, patientId, profileId, eventD
               <span className={cn("font-medium", consumption === 'none' ? "text-red-900" : "text-gray-700")}>Não comeu</span>
             </button>
           </div>
+        </div>
+
+        <div className="space-y-3">
+          <label className="text-sm font-semibold text-gray-900">Horário da Refeição</label>
+          <Input 
+            type="time"
+            value={mealTime}
+            onChange={(e) => setMealTime(e.target.value)}
+          />
         </div>
 
         <div className="space-y-3">

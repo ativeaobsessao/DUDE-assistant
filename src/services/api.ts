@@ -83,10 +83,10 @@ export async function getMedications(patientId: string): Promise<Medication[]> {
 
 // --- LOGS ---
 
-export async function getMealLogs(patientId: string, eventDate: string): Promise<MealLog[]> {
+export async function getMealLogs(patientId: string, eventDate: string): Promise<any[]> {
   const { data, error } = await supabase
     .from('meal_logs')
-    .select('*')
+    .select('*, creator:profiles!meal_logs_created_by_fkey(name)')
     .eq('patient_id', patientId)
     .eq('event_date', eventDate);
 
@@ -109,10 +109,19 @@ export async function createMealLog(log: Database['public']['Tables']['meal_logs
   const { data, error } = await supabase
     .from('meal_logs')
     .insert(log as any)
-    .select()
+    .select('*, creator:profiles!meal_logs_created_by_fkey(name)')
     .single();
 
-  if (error) throw error;
+  if (error) {
+    if (error.code === 'PGRST204' && 'meal_time' in log) {
+      console.warn("A coluna 'meal_time' ainda não existe no banco (PGRST204). Rode a migração SQL. Salvando sem o horário temporariamente...");
+      const { meal_time, ...logWithoutTime } = log as any;
+      const retry = await supabase.from('meal_logs').insert(logWithoutTime).select('*, creator:profiles!meal_logs_created_by_fkey(name)').single();
+      if (retry.error) throw retry.error;
+      return retry.data;
+    }
+    throw error;
+  }
   return data;
 }
 
@@ -122,10 +131,19 @@ export async function updateMealLog(id: string, log: Database['public']['Tables'
     // @ts-expect-error Supabase strict types fail here
     .update(log)
     .eq('id', id)
-    .select()
+    .select('*, creator:profiles!meal_logs_created_by_fkey(name)')
     .single();
 
-  if (error) throw error;
+  if (error) {
+    if (error.code === 'PGRST204' && 'meal_time' in log) {
+      console.warn("A coluna 'meal_time' ainda não existe no banco (PGRST204). Rode a migração SQL. Atualizando sem o horário temporariamente...");
+      const { meal_time, ...logWithoutTime } = log as any;
+      const retry = await supabase.from('meal_logs').update(logWithoutTime).eq('id', id).select('*, creator:profiles!meal_logs_created_by_fkey(name)').single();
+      if (retry.error) throw retry.error;
+      return retry.data;
+    }
+    throw error;
+  }
   return data;
 }
 
