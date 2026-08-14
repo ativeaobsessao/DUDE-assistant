@@ -26,8 +26,7 @@ export function MainLayout({ children, activeTab = 'today', onTabChange }: MainL
           </button>
           <button 
             onClick={() => onTabChange && onTabChange('history')}
-            className={cn("flex flex-col items-center justify-center w-full h-full space-y-1 text-xs font-medium transition-colors opacity-50 cursor-not-allowed")}
-            disabled
+            className={cn("flex flex-col items-center justify-center w-full h-full space-y-1 text-xs font-medium transition-colors", activeTab === 'history' ? "text-gray-900" : "text-gray-400 hover:text-gray-600")}
           >
             <Clock className="w-6 h-6" />
             <span>Histórico</span>

@@ -5,6 +5,7 @@ import { LoginScreen } from './pages/Login';
 import { TodayScreen } from './pages/Today';
 import { RoutineScreen } from './pages/Routine';
 import { SetupScreen } from './pages/Setup';
+import { HistoryScreen } from './pages/History';
 import { Spinner } from './components/ui/Spinner';
 
 export default function App() {
@@ -77,6 +78,10 @@ export default function App() {
 
   if (currentTab === 'routine') {
     return <RoutineScreen onTabChange={setCurrentTab} />;
+  }
+  
+  if (currentTab === 'history') {
+    return <HistoryScreen onTabChange={setCurrentTab} />;
   }
 
   return <TodayScreen onTabChange={setCurrentTab} />;

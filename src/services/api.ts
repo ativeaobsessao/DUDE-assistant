@@ -83,6 +83,32 @@ export async function getMedications(patientId: string): Promise<Medication[]> {
 
 // --- LOGS ---
 
+export async function getHistoricalMealLogs(patientId: string, beforeDate: string): Promise<any[]> {
+  const { data, error } = await supabase
+    .from('meal_logs')
+    .select('*, creator:profiles!meal_logs_created_by_fkey(name), meal_config:meal_configs(*)')
+    .eq('patient_id', patientId)
+    .lt('event_date', beforeDate)
+    .order('event_date', { ascending: false })
+    .order('meal_time', { ascending: false });
+
+  if (error) throw error;
+  return data;
+}
+
+export async function getHistoricalMedicationLogs(patientId: string, beforeDate: string): Promise<any[]> {
+  const { data, error } = await supabase
+    .from('medication_logs')
+    .select('*, medication:medications(*), period:medication_periods(*)')
+    .eq('patient_id', patientId)
+    .lt('event_date', beforeDate)
+    .order('event_date', { ascending: false })
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data;
+}
+
 export async function getMealLogs(patientId: string, eventDate: string): Promise<any[]> {
   const { data, error } = await supabase
     .from('meal_logs')
