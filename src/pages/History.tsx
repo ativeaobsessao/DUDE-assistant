@@ -115,9 +115,7 @@ export function HistoryScreen({ onTabChange }: { onTabChange?: (tab: 'today' | '
       
       for (const log of medLogs) {
         const dateStr = log.event_date;
-        const periodId = log.medication?.medication_period_id;
-        
-        if (!periodId) continue;
+        const periodId = log.medication?.medication_period_id || 'unknown_period';
         
         if (!medLogsByDateAndPeriod[dateStr]) medLogsByDateAndPeriod[dateStr] = {};
         if (!medLogsByDateAndPeriod[dateStr][periodId]) medLogsByDateAndPeriod[dateStr][periodId] = [];
@@ -132,11 +130,12 @@ export function HistoryScreen({ onTabChange }: { onTabChange?: (tab: 'today' | '
           const logs = medLogsByDateAndPeriod[dateStr][periodId];
           const period = logs[0].medication?.period || { id: periodId, time: '00:00:00' };
           const medications = logs.map(l => l.medication).filter(Boolean);
+          const fallbackTime = logs[0].created_at ? logs[0].created_at.substring(11, 16) + ':00' : '00:00:00';
           
           groups[dateStr].push({
             id: periodId,
             type: 'medication_period',
-            time: period.time,
+            time: period.time || fallbackTime,
             title: 'Medicamentos',
             status: 'confirmed',
             period,

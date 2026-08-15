@@ -88,7 +88,7 @@ export async function getHistoricalMealLogs(patientId: string, beforeDate: strin
     .from('meal_logs')
     .select('*, creator:profiles!meal_logs_created_by_fkey(name), meal_config:meal_configs(*)')
     .eq('patient_id', patientId)
-    .lt('event_date', beforeDate)
+    .lte('event_date', beforeDate)
     .order('event_date', { ascending: false })
     .order('meal_time', { ascending: false });
 
@@ -101,7 +101,7 @@ export async function getHistoricalMedicationLogs(patientId: string, beforeDate:
     .from('medication_logs')
     .select('*, medication:medications(*, period:medication_periods(*)), creator:profiles!medication_logs_created_by_fkey(name)')
     .eq('patient_id', patientId)
-    .lt('event_date', beforeDate)
+    .lte('event_date', beforeDate)
     .order('event_date', { ascending: false })
     .order('created_at', { ascending: false });
 
