@@ -13,17 +13,23 @@ import { Spinner } from '../components/ui/Spinner';
 import { UserProfile } from '../components/ui/UserProfile';
 import { TimelineItem } from '../components/timeline/TimelineItem';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { MealModal } from '../components/meals/MealModal';
+import { MedicationModal } from '../components/medications/MedicationModal';
 import type { TimelineEvent, MealEventData, MedicationEventData } from '../types/timeline';
 
 function HistoryDayGroup({ 
   dateStr, 
   events, 
-  closure 
+  closure,
+  onEditMeal,
+  onEditMed
 }: { 
   key?: React.Key, 
   dateStr: string, 
   events: TimelineEvent[],
-  closure?: any 
+  closure?: any,
+  onEditMeal: (event: MealEventData, dateStr: string) => void,
+  onEditMed: (event: MedicationEventData, dateStr: string) => void
 }) {
   const [expanded, setExpanded] = useState(false);
   
@@ -89,7 +95,11 @@ function HistoryDayGroup({
               key={`${event.id}-${idx}`} 
               event={event} 
               onClick={() => {
-                // Ready for future editing
+                if (event.type === 'meal') {
+                  onEditMeal(event as MealEventData, dateStr);
+                } else {
+                  onEditMed(event as MedicationEventData, dateStr);
+                }
               }} 
             />
           ))}
@@ -104,6 +114,9 @@ export function HistoryScreen({ onTabChange }: { onTabChange?: (tab: 'today' | '
   const [patient, setPatient] = useState<any>(null);
   const [groupedEvents, setGroupedEvents] = useState<Record<string, TimelineEvent[]>>({});
   const [closures, setClosures] = useState<Record<string, any>>({});
+  const [profile, setProfile] = useState<any>(null);
+  const [selectedMealEvent, setSelectedMealEvent] = useState<{ event: MealEventData, dateStr: string } | null>(null);
+  const [selectedMedEvent, setSelectedMedEvent] = useState<{ event: MedicationEventData, dateStr: string } | null>(null);
 
   useEffect(() => {
     loadData();
@@ -114,6 +127,7 @@ export function HistoryScreen({ onTabChange }: { onTabChange?: (tab: 'today' | '
     try {
       const prof = await getCurrentProfile();
       if (!prof) return;
+      setProfile(prof);
 
       const pat = await getPatient(prof.family_id);
       if (!pat) return;
@@ -253,11 +267,37 @@ export function HistoryScreen({ onTabChange }: { onTabChange?: (tab: 'today' | '
                 dateStr={dateStr}
                 events={groupedEvents[dateStr]}
                 closure={closures[dateStr]}
+                onEditMeal={(event, date) => setSelectedMealEvent({ event, dateStr: date })}
+                onEditMed={(event, date) => setSelectedMedEvent({ event, dateStr: date })}
               />
             ))
           )}
         </div>
       </div>
+      
+      {/* Modals */}
+      {selectedMealEvent && patient && profile && (
+        <MealModal 
+          isOpen={!!selectedMealEvent}
+          onClose={() => setSelectedMealEvent(null)}
+          event={selectedMealEvent.event}
+          patientId={patient.id}
+          profileId={profile.id}
+          eventDate={selectedMealEvent.dateStr}
+          onSuccess={() => { loadData(); setSelectedMealEvent(null); }}
+        />
+      )}
+      {selectedMedEvent && patient && profile && (
+        <MedicationModal 
+          isOpen={!!selectedMedEvent}
+          onClose={() => setSelectedMedEvent(null)}
+          event={selectedMedEvent.event}
+          patientId={patient.id}
+          profileId={profile.id}
+          eventDate={selectedMedEvent.dateStr}
+          onSuccess={() => { loadData(); setSelectedMedEvent(null); }}
+        />
+      )}
     </MainLayout>
   );
 }
