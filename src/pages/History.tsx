@@ -5,7 +5,8 @@ import {
   getPatient, 
   getHistoricalMealLogs,
   getHistoricalMedicationLogs,
-  getMealPhotoUrl
+  getMealPhotoUrl,
+  getHistoricalDailyClosures
 } from '../services/api';
 import { getLocalDateString } from '../utils/date';
 import { Spinner } from '../components/ui/Spinner';
@@ -16,11 +17,13 @@ import type { TimelineEvent, MealEventData, MedicationEventData } from '../types
 
 function HistoryDayGroup({ 
   dateStr, 
-  events 
+  events, 
+  closure 
 }: { 
   key?: React.Key, 
   dateStr: string, 
-  events: TimelineEvent[] 
+  events: TimelineEvent[],
+  closure?: any 
 }) {
   const [expanded, setExpanded] = useState(false);
   
@@ -33,19 +36,55 @@ function HistoryDayGroup({
   }).format(d);
   friendly = friendly.charAt(0).toUpperCase() + friendly.slice(1);
 
+
   return (
     <div className="mb-4">
       <button 
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100 shadow-sm"
+        className="w-full flex flex-col p-4 bg-white rounded-xl border border-gray-100 shadow-sm"
       >
-        <span className="font-semibold text-gray-900 uppercase text-xs tracking-wider">{friendly}</span>
-        {expanded ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
+        <div className="w-full flex items-center justify-between mb-1">
+          <span className="font-semibold text-gray-900 uppercase text-xs tracking-wider">
+            {friendly}
+            {closure && <span className="ml-2 text-green-600">✓</span>}
+            {!closure && <span className="ml-2 text-gray-400">○</span>}
+          </span>
+          {expanded ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
+        </div>
+        
+        {closure ? (
+          <div className="text-left">
+            <span className="text-[11px] text-gray-500">
+              Encerrado por {closure.closed_by_profile?.name || 'Familiar'} às {new Date(closure.closed_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          </div>
+        ) : (
+          <div className="text-left">
+            <span className="text-[11px] text-gray-500">Dia em aberto</span>
+          </div>
+        )}
       </button>
       
       {expanded && (
         <div className="mt-4 space-y-4 px-2">
+          {closure ? (
+            <div className="flex items-center space-x-2 text-xs font-medium text-green-700 bg-green-50 px-3 py-2 rounded-lg mb-4">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span>DIA ENCERRADO</span>
+            </div>
+          ) : (
+            <div className="flex items-center space-x-2 text-xs font-medium text-gray-600 bg-gray-50 px-3 py-2 rounded-lg mb-4">
+              <span className="text-lg leading-none">○</span>
+              <span>DIA EM ABERTO</span>
+            </div>
+          )}
+          
+          <div className="h-px w-full bg-gray-100 my-2"></div>
+
           {events.map((event, idx) => (
+
             <TimelineItem 
               key={`${event.id}-${idx}`} 
               event={event} 
@@ -64,6 +103,7 @@ export function HistoryScreen({ onTabChange }: { onTabChange?: (tab: 'today' | '
   const [loading, setLoading] = useState(true);
   const [patient, setPatient] = useState<any>(null);
   const [groupedEvents, setGroupedEvents] = useState<Record<string, TimelineEvent[]>>({});
+  const [closures, setClosures] = useState<Record<string, any>>({});
 
   useEffect(() => {
     loadData();
@@ -81,10 +121,19 @@ export function HistoryScreen({ onTabChange }: { onTabChange?: (tab: 'today' | '
 
       const localDate = getLocalDateString();
       
-      const [mealLogs, medLogs] = await Promise.all([
+      const [mealLogs, medLogs, closuresData] = await Promise.all([
         getHistoricalMealLogs(pat.id, localDate),
-        getHistoricalMedicationLogs(pat.id, localDate)
+        getHistoricalMedicationLogs(pat.id, localDate),
+        getHistoricalDailyClosures(pat.id, localDate)
       ]);
+      
+      const closuresMap: Record<string, any> = {};
+      for (const c of closuresData) {
+        closuresMap[c.date] = c;
+      }
+      setClosures(closuresMap);
+
+
 
       const groups: Record<string, TimelineEvent[]> = {};
 
@@ -203,6 +252,7 @@ export function HistoryScreen({ onTabChange }: { onTabChange?: (tab: 'today' | '
                 key={dateStr}
                 dateStr={dateStr}
                 events={groupedEvents[dateStr]}
+                closure={closures[dateStr]}
               />
             ))
           )}
