@@ -113,14 +113,22 @@ export function TimelineItem({ event, onClick }: TimelineItemProps) {
             <p className="text-sm text-gray-500 mt-2 truncate">"{event.log.description}"</p>
           )}
           
-          {event.type === 'meal' && event.log && (
+          {(event.status === 'confirmed' || event.status === 'attention') && (
             <div className="mt-4 pt-3 border-t border-gray-900/5 flex flex-col space-y-0.5">
               <div className="flex items-center text-xs text-gray-500">
                 <span className="mr-1.5 opacity-70">👤</span>
-                <span className="font-medium text-gray-700">Registrado por {event.log.creator?.name || 'Familiar'}</span>
+                <span className="font-medium text-gray-700">Registrado por {
+                  event.type === 'meal' 
+                    ? (event.log?.creator?.name || 'Familiar')
+                    : (event.logs?.[0]?.creator?.name || 'Familiar')
+                }</span>
               </div>
               <div className="text-[11px] text-gray-400 pl-5">
-                Registrado às {new Date(event.log.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                Registrado às {new Date(
+                  event.type === 'meal' 
+                    ? event.log?.created_at 
+                    : event.logs?.[0]?.created_at
+                ).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
               </div>
             </div>
           )}

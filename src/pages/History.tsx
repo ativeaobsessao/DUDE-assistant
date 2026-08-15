@@ -9,6 +9,7 @@ import {
 } from '../services/api';
 import { getLocalDateString } from '../utils/date';
 import { Spinner } from '../components/ui/Spinner';
+import { UserProfile } from '../components/ui/UserProfile';
 import { TimelineItem } from '../components/timeline/TimelineItem';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import type { TimelineEvent, MealEventData, MedicationEventData } from '../types/timeline';
@@ -17,6 +18,7 @@ function HistoryDayGroup({
   dateStr, 
   events 
 }: { 
+  key?: React.Key, 
   dateStr: string, 
   events: TimelineEvent[] 
 }) {
@@ -184,6 +186,7 @@ export function HistoryScreen({ onTabChange }: { onTabChange?: (tab: 'today' | '
         <div className="bg-white px-6 pt-12 pb-6 sticky top-0 z-30 border-b border-gray-100/50 backdrop-blur-xl">
           <div className="flex items-center justify-between mb-2">
             <h1 className="text-2xl font-bold tracking-tight text-gray-900">Histórico</h1>
+            <UserProfile />
           </div>
           <p className="text-sm text-gray-500">
             Registros anteriores de {patient.name}

@@ -10,6 +10,7 @@ import {
   getMedications 
 } from '../services/api';
 import { Spinner } from '../components/ui/Spinner';
+import { UserProfile } from '../components/ui/UserProfile';
 import { PatientEditModal } from '../components/routine/PatientEditModal';
 import { TimeEditModal } from '../components/routine/TimeEditModal';
 import { MedicationFormModal } from '../components/routine/MedicationFormModal';
@@ -128,8 +129,11 @@ export function RoutineScreen({ onTabChange }: RoutineScreenProps) {
       <div className="max-w-md mx-auto w-full px-6 py-12 space-y-12">
         
         {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900">Rotina</h1>
+          <UserProfile />
+        </div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900 mb-8">Rotina</h1>
           
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col items-center text-center">
             <div className="relative mb-4">

@@ -8,6 +8,7 @@ export function LoginScreen() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -19,9 +20,19 @@ export function LoginScreen() {
     setLoading(true);
 
     if (isSignUp) {
+      if (!name) {
+        setError('Por favor, informe seu nome.');
+        setLoading(false);
+        return;
+      }
       const { error: authError } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            full_name: name,
+          }
+        }
       });
 
       if (authError) {
@@ -73,6 +84,15 @@ export function LoginScreen() {
           )}
           
           <div className="space-y-4">
+            {isSignUp && (
+              <Input
+                type="text"
+                placeholder="Seu nome"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required={isSignUp}
+              />
+            )}
             <Input
               type="email"
               placeholder="Seu e-mail"

@@ -17,6 +17,7 @@ import { Spinner } from '../components/ui/Spinner';
 import { Badge } from '../components/ui/Badge';
 import { TimelineItem } from '../components/timeline/TimelineItem';
 import { MealModal } from '../components/meals/MealModal';
+import { UserProfile } from '../components/ui/UserProfile';
 import { MedicationModal } from '../components/medications/MedicationModal';
 import type { TimelineEvent, MealEventData, MedicationEventData } from '../types/timeline';
 
@@ -236,12 +237,7 @@ export function TodayScreen({ onTabChange }: { onTabChange?: (tab: 'today' | 'hi
         <div className="bg-white px-6 pt-12 pb-6 sticky top-0 z-30 border-b border-gray-100/50 backdrop-blur-xl">
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl font-bold tracking-tight text-gray-900">DUDE</h1>
-            <button 
-              onClick={() => supabase.auth.signOut()} 
-              className="text-sm font-medium text-gray-500 hover:text-gray-900"
-            >
-              Sair
-            </button>
+            <UserProfile />
           </div>
 
           <div className="flex items-center space-x-4">

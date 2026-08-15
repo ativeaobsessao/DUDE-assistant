@@ -99,7 +99,7 @@ export async function getHistoricalMealLogs(patientId: string, beforeDate: strin
 export async function getHistoricalMedicationLogs(patientId: string, beforeDate: string): Promise<any[]> {
   const { data, error } = await supabase
     .from('medication_logs')
-    .select('*, medication:medications(*, period:medication_periods(*))')
+    .select('*, medication:medications(*, period:medication_periods(*)), creator:profiles!medication_logs_created_by_fkey(name)')
     .eq('patient_id', patientId)
     .lt('event_date', beforeDate)
     .order('event_date', { ascending: false })
@@ -120,10 +120,10 @@ export async function getMealLogs(patientId: string, eventDate: string): Promise
   return data;
 }
 
-export async function getMedicationLogs(patientId: string, eventDate: string): Promise<MedicationLog[]> {
+export async function getMedicationLogs(patientId: string, eventDate: string): Promise<any[]> {
   const { data, error } = await supabase
     .from('medication_logs')
-    .select('*')
+    .select('*, creator:profiles!medication_logs_created_by_fkey(name)')
     .eq('patient_id', patientId)
     .eq('event_date', eventDate);
 
