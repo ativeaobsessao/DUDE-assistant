@@ -43,6 +43,18 @@ export function getWeekdayName(dateStr: string): string {
 }
 
 export function formatTime(timeString: string): string {
-  // timeString is '08:00:00'
-  return timeString.slice(0, 5);
+  if (!timeString) return '';
+  const parts = timeString.split(':');
+  if (parts.length >= 2) {
+    return `${parts[0]}h:${parts[1]}min`;
+  }
+  return timeString;
+}
+
+export function formatDateToTime(dateVal: Date | string): string {
+  if (!dateVal) return '';
+  const d = typeof dateVal === 'string' ? new Date(dateVal) : dateVal;
+  const h = d.getHours().toString().padStart(2, '0');
+  const m = d.getMinutes().toString().padStart(2, '0');
+  return `${h}h:${m}min`;
 }

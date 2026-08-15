@@ -14,7 +14,7 @@ import {
   createDailyClosure
 } from '../services/api';
 import { supabase } from '../services/supabase';
-import { getLocalDateString, getCurrentLocalTime, formatFriendlyDate, getWeekdayName, formatTime } from '../utils/date';
+import { getLocalDateString, getCurrentLocalTime, formatFriendlyDate, getWeekdayName, formatTime, formatDateToTime } from '../utils/date';
 import { Spinner } from '../components/ui/Spinner';
 import { Badge } from '../components/ui/Badge';
 import { TimelineItem } from '../components/timeline/TimelineItem';
@@ -360,7 +360,7 @@ export function TodayScreen({ onTabChange }: { onTabChange?: (tab: 'today' | 'hi
               </div>
               <h3 className="font-semibold text-gray-900">Dia encerrado</h3>
               <p className="text-sm text-gray-500 mt-1">
-                Encerrado por {dailyClosure.closed_by_profile?.name || 'Familiar'} às {new Date(dailyClosure.closed_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                Encerrado por {dailyClosure.closed_by_profile?.name || 'Familiar'} às {formatDateToTime(dailyClosure.closed_at)}
               </p>
             </div>
           ) : isAllEventsCompleted ? (

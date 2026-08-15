@@ -184,7 +184,7 @@ export function RoutineScreen({ onTabChange }: RoutineScreenProps) {
               >
                 <div className="text-left">
                   <h4 className={`font-semibold ${!meal.active ? 'text-gray-500 line-through' : 'text-gray-900'}`}>{meal.name}</h4>
-                  <p className="text-sm text-gray-500">{meal.scheduled_time.slice(0, 5)}</p>
+                  <p className="text-sm text-gray-500">{formatTime(meal.scheduled_time)}</p>
                 </div>
                 <Edit2 className="w-4 h-4 text-gray-300" />
               </button>
@@ -216,7 +216,7 @@ export function RoutineScreen({ onTabChange }: RoutineScreenProps) {
                   <div className="flex items-center justify-between mb-4 border-b border-gray-50 pb-4">
                     <div className="text-left">
                       <h4 className={`font-bold ${!period.active ? 'text-gray-400 line-through' : 'text-gray-900'}`}>{period.name}</h4>
-                      <p className="text-sm text-gray-500">{period.scheduled_time.slice(0, 5)}</p>
+                      <p className="text-sm text-gray-500">{formatTime(period.scheduled_time)}</p>
                     </div>
                     <button 
                       onClick={() => {

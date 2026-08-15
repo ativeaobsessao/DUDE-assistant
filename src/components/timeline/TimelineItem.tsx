@@ -1,7 +1,7 @@
 import React from 'react';
 import { Coffee, Pill } from 'lucide-react';
 import { cn } from '../../utils/cn';
-import { formatTime } from '../../utils/date';
+import { formatTime, formatDateToTime } from '../../utils/date';
 import { Badge } from '../ui/Badge';
 import type { TimelineEvent } from '../../types/timeline';
 
@@ -124,11 +124,11 @@ export function TimelineItem({ event, onClick }: TimelineItemProps) {
                 }</span>
               </div>
               <div className="text-[11px] text-gray-400 pl-5">
-                Registrado às {new Date(
+                Registrado às {formatDateToTime(new Date(
                   event.type === 'meal' 
                     ? event.log?.created_at 
                     : event.logs?.[0]?.created_at
-                ).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                ))}
               </div>
             </div>
           )}

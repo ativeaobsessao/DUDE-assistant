@@ -8,7 +8,7 @@ import {
   getMealPhotoUrl,
   getHistoricalDailyClosures
 } from '../services/api';
-import { getLocalDateString } from '../utils/date';
+import { getLocalDateString, formatDateToTime } from '../utils/date';
 import { Spinner } from '../components/ui/Spinner';
 import { UserProfile } from '../components/ui/UserProfile';
 import { TimelineItem } from '../components/timeline/TimelineItem';
@@ -61,7 +61,7 @@ function HistoryDayGroup({
         {closure ? (
           <div className="text-left">
             <span className="text-[11px] text-gray-500">
-              Encerrado por {closure.closed_by_profile?.name || 'Familiar'} às {new Date(closure.closed_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+              Encerrado por {closure.closed_by_profile?.name || 'Familiar'} às {formatDateToTime(closure.closed_at)}
             </span>
           </div>
         ) : (

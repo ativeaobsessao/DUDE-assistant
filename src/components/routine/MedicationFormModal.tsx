@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BottomSheet } from '../ui/BottomSheet';
 import { Button } from '../ui/Button';
+import { formatTime } from '../../utils/date';
 import { Input } from '../ui/Input';
 import { Spinner } from '../ui/Spinner';
 import { createMedication, updateMedication } from '../../services/api';
@@ -103,7 +104,7 @@ export function MedicationFormModal({ isOpen, onClose, patientId, medication, pe
             onChange={(e) => setPeriodId(e.target.value)}
           >
             {periods.map(p => (
-              <option key={p.id} value={p.id}>{p.name} ({p.scheduled_time.slice(0, 5)})</option>
+              <option key={p.id} value={p.id}>{p.name} ({formatTime(p.scheduled_time)})</option>
             ))}
           </select>
         </div>
