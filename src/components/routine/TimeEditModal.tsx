@@ -60,7 +60,7 @@ export function TimeEditModal({ isOpen, onClose, entity, patientId, type, onSucc
       } else {
         if (!patientId) throw new Error("Patient ID missing for creation");
         if (type === 'meal') {
-          await createMealConfig({ patient_id: patientId, name: name.trim(), scheduled_time, active, display_order: 99 });
+          await createMealConfig({ patient_id: patientId, name: name.trim(), type: 'custom', scheduled_time, active, display_order: 99 });
         } else {
           await createMedicationPeriod({ patient_id: patientId, name: name.trim(), scheduled_time, active, display_order: 99 });
         }
