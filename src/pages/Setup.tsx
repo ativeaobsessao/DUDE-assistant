@@ -3,7 +3,7 @@ import { Camera, Image as ImageIcon, X } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Spinner } from '../components/ui/Spinner';
-import { getCurrentProfile, createPatient, uploadPatientPhoto, seedInitialRoutine } from '../services/api';
+import { getCurrentProfile, createPatient, updatePatient, uploadPatientPhoto, seedInitialRoutine } from '../services/api';
 import { compressImage } from '../utils/image';
 
 interface SetupScreenProps {
