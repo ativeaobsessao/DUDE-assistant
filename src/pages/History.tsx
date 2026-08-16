@@ -1,7 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { MainLayout } from '../layouts/MainLayout';
-import { getCurrentProfile, getPatient, getHistoricalMealLogs, getHistoricalMedicationLogs, getMealPhotoUrl, getHistoricalDailyClosures } from '../services/api';
-import { getLocalDateString, formatDateToTime } from '../utils/date';
+import { 
+  getCurrentProfile, 
+  getPatient, 
+  getHistoricalMealLogs,
+  getHistoricalMedicationLogs,
+  getMealPhotoUrl,
+  getHistoricalDailyClosures
+} from '../services/api';
+import { getLocalDateString, formatDateToTime, formatFriendlyDate } from '../utils/date';
 import { Spinner } from '../components/ui/Spinner';
 import { UserProfile } from '../components/ui/UserProfile';
 import { TimelineItem } from '../components/timeline/TimelineItem';
@@ -10,23 +17,31 @@ import { MealModal } from '../components/meals/MealModal';
 import { MedicationModal } from '../components/medications/MedicationModal';
 import type { TimelineEvent, MealEventData, MedicationEventData } from '../types/timeline';
 
-function HistoryDayGroup({ dateStr, events, closure, onEditMeal, onEditMed }: { key?: React.Key, dateStr: string, events: TimelineEvent[], closure?: any, onEditMeal: (event: MealEventData, dateStr: string) => void, onEditMed: (event: MedicationEventData, dateStr: string) => void }) {
+function HistoryDayGroup({ 
+  dateStr, 
+  events, 
+  closure,
+  onEditMeal,
+  onEditMed
+}: { 
+  key?: React.Key, 
+  dateStr: string, 
+  events: TimelineEvent[],
+  closure?: any,
+  onEditMeal: (event: MealEventData, dateStr: string) => void,
+  onEditMed: (event: MedicationEventData, dateStr: string) => void
+}) {
   const [expanded, setExpanded] = useState(false);
   
-  let friendly = dateStr;
-  try {
-    const d = new Date(dateStr + 'T00:00:00');
-    if (!isNaN(d.getTime())) {
-      friendly = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }).format(d);
-      friendly = friendly.charAt(0).toUpperCase() + friendly.slice(1);
-    }
-  } catch (e) {
-    friendly = dateStr || 'Data inválida';
-  }
+  const friendly = formatFriendlyDate(dateStr);
+
 
   return (
     <div className="mb-4">
-      <button onClick={() => setExpanded(!expanded)} className="w-full flex flex-col p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
+      <button 
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex flex-col p-4 bg-white rounded-xl border border-gray-100 shadow-sm"
+      >
         <div className="w-full flex items-center justify-between mb-1">
           <span className="font-semibold text-gray-900 uppercase text-xs tracking-wider">
             {friendly}
@@ -53,7 +68,9 @@ function HistoryDayGroup({ dateStr, events, closure, onEditMeal, onEditMed }: { 
         <div className="mt-4 space-y-4 px-2">
           {closure ? (
             <div className="flex items-center space-x-2 text-xs font-medium text-green-700 bg-green-50 px-3 py-2 rounded-lg mb-4">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
               <span>DIA ENCERRADO</span>
             </div>
           ) : (
@@ -64,7 +81,9 @@ function HistoryDayGroup({ dateStr, events, closure, onEditMeal, onEditMed }: { 
           )}
           
           <div className="h-px w-full bg-gray-100 my-2"></div>
+
           {events.map((event, idx) => (
+
             <TimelineItem 
               key={`${event.id}-${idx}`} 
               event={event} 
@@ -108,6 +127,7 @@ export function HistoryScreen({ onTabChange }: { onTabChange?: (tab: 'today' | '
       setPatient(pat);
 
       const localDate = getLocalDateString();
+      
       const [mealLogs, medLogs, closuresData] = await Promise.all([
         getHistoricalMealLogs(pat.id, localDate),
         getHistoricalMedicationLogs(pat.id, localDate),
@@ -120,15 +140,21 @@ export function HistoryScreen({ onTabChange }: { onTabChange?: (tab: 'today' | '
       }
       setClosures(closuresMap);
 
+
+
       const groups: Record<string, TimelineEvent[]> = {};
+
       for (const log of mealLogs) {
         const dateStr = log.event_date;
         if (!groups[dateStr]) groups[dateStr] = [];
+
         let photoSignedUrl = null;
         if (log.photo_url) {
           photoSignedUrl = await getMealPhotoUrl(log.photo_url);
         }
+
         const mealConfig = log.meal_config || { name: 'Refeição', scheduled_time: log.meal_time || '00:00:00' };
+
         groups[dateStr].push({
           id: log.meal_config_id || log.id,
           type: 'meal',
@@ -142,21 +168,26 @@ export function HistoryScreen({ onTabChange }: { onTabChange?: (tab: 'today' | '
       }
 
       const medLogsByDateAndPeriod: Record<string, Record<string, any[]>> = {};
+      
       for (const log of medLogs) {
         const dateStr = log.event_date;
         const periodId = log.medication?.medication_period_id || 'unknown_period';
+        
         if (!medLogsByDateAndPeriod[dateStr]) medLogsByDateAndPeriod[dateStr] = {};
         if (!medLogsByDateAndPeriod[dateStr][periodId]) medLogsByDateAndPeriod[dateStr][periodId] = [];
+        
         medLogsByDateAndPeriod[dateStr][periodId].push(log);
       }
 
       for (const dateStr of Object.keys(medLogsByDateAndPeriod)) {
         if (!groups[dateStr]) groups[dateStr] = [];
+        
         for (const periodId of Object.keys(medLogsByDateAndPeriod[dateStr])) {
           const logs = medLogsByDateAndPeriod[dateStr][periodId];
           const period = logs[0].medication?.period || { id: periodId, time: '00:00:00' };
           const medications = logs.map(l => l.medication).filter(Boolean);
           const fallbackTime = logs[0].created_at ? logs[0].created_at.substring(11, 16) + ':00' : '00:00:00';
+          
           groups[dateStr].push({
             id: periodId,
             type: 'medication_period',
@@ -173,6 +204,7 @@ export function HistoryScreen({ onTabChange }: { onTabChange?: (tab: 'today' | '
       for (const dateStr of Object.keys(groups)) {
         groups[dateStr].sort((a, b) => a.time.localeCompare(b.time));
       }
+
       setGroupedEvents(groups);
     } catch (err) {
       console.error("Error loading history:", err);
@@ -181,8 +213,25 @@ export function HistoryScreen({ onTabChange }: { onTabChange?: (tab: 'today' | '
     }
   }
 
-  if (loading) return <MainLayout activeTab="history" onTabChange={onTabChange}><div className="flex h-[80vh] items-center justify-center"><Spinner /></div></MainLayout>;
-  if (!patient) return <MainLayout activeTab="history" onTabChange={onTabChange}><div className="flex h-[80vh] items-center justify-center flex-col text-center px-6"><p className="text-gray-500">Paciente não encontrado.</p></div></MainLayout>;
+  if (loading) {
+    return (
+      <MainLayout activeTab="history" onTabChange={onTabChange}>
+        <div className="flex h-[80vh] items-center justify-center">
+          <Spinner />
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (!patient) {
+    return (
+      <MainLayout activeTab="history" onTabChange={onTabChange}>
+        <div className="flex h-[80vh] items-center justify-center flex-col text-center px-6">
+          <p className="text-gray-500">Paciente não encontrado.</p>
+        </div>
+      </MainLayout>
+    );
+  }
 
   const sortedDates = Object.keys(groupedEvents).sort((a, b) => b.localeCompare(a));
 
@@ -194,9 +243,11 @@ export function HistoryScreen({ onTabChange }: { onTabChange?: (tab: 'today' | '
             <h1 className="text-2xl font-bold tracking-tight text-gray-900">Histórico</h1>
             <UserProfile />
           </div>
-          <p className="text-sm text-gray-500">Registros anteriores de {patient.name}</p>
+          <p className="text-sm text-gray-500">
+            Registros anteriores de {patient.name}
+          </p>
         </div>
-        
+
         <div className="p-6">
           {sortedDates.length === 0 ? (
             <div className="text-center py-12">
@@ -207,7 +258,7 @@ export function HistoryScreen({ onTabChange }: { onTabChange?: (tab: 'today' | '
               <HistoryDayGroup 
                 key={dateStr}
                 dateStr={dateStr}
-                events={groupedEvents[dateStr] || []}
+                events={groupedEvents[dateStr]}
                 closure={closures[dateStr]}
                 onEditMeal={(event, date) => setSelectedMealEvent({ event, dateStr: date })}
                 onEditMed={(event, date) => setSelectedMedEvent({ event, dateStr: date })}
