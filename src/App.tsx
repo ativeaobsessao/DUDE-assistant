@@ -14,48 +14,20 @@ export default function App() {
   const [needsSetup, setNeedsSetup] = useState(false);
   const [currentTab, setCurrentTab] = useState<'today' | 'history' | 'routine'>('today');
 
+  // MOCK LOGIN FOR TESTING THE CRASH
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session) {
-        checkPatient(session);
-      } else {
-        setLoading(false);
-      }
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session) {
-        checkPatient(session);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  async function checkPatient(session: any) {
-    try {
-      const profile = await getCurrentProfile();
-      if (profile && profile.family_id) {
-        const patient = await getPatient(profile.family_id);
-        if (!patient) {
-          setNeedsSetup(true);
-        } else {
-          setNeedsSetup(false);
-        }
-      } else {
-        setNeedsSetup(true); // Force setup if profile is missing
-      }
-    } catch (e) {
-      console.error(e);
-      setNeedsSetup(true); // Fallback to setup if there's an error
-    } finally {
+    // Fake session to force rendering authenticated area
+    const fakeSession = { user: { id: 'test-user-id' } };
+    setSession(fakeSession);
+    
+    // Fake profile and patient
+    const mockCheckPatient = async () => {
+      setNeedsSetup(false);
       setLoading(false);
-    }
-  }
+    };
+    
+    mockCheckPatient();
+  }, []);
 
   if (loading) {
     return (
