@@ -14,20 +14,48 @@ export default function App() {
   const [needsSetup, setNeedsSetup] = useState(false);
   const [currentTab, setCurrentTab] = useState<'today' | 'history' | 'routine'>('today');
 
-  // MOCK LOGIN FOR TESTING THE CRASH
   useEffect(() => {
-    // Fake session to force rendering authenticated area
-    const fakeSession = { user: { id: 'test-user-id' } };
-    setSession(fakeSession);
-    
-    // Fake profile and patient
-    const mockCheckPatient = async () => {
-      setNeedsSetup(false);
-      setLoading(false);
-    };
-    
-    mockCheckPatient();
+    // Check existing session on mount
+    supabase.auth.getSession().then(async ({ data: { session: s } }) => {
+      setSession(s);
+      if (s) {
+        await checkPatient();
+      } else {
+        setLoading(false);
+      }
+    });
+
+    // Listen for auth state changes (login / logout)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, s) => {
+      setSession(s);
+      if (s) {
+        await checkPatient();
+      } else {
+        setNeedsSetup(false);
+        setLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
+
+  async function checkPatient() {
+    try {
+      const prof = await getCurrentProfile();
+      if (!prof) {
+        setNeedsSetup(true);
+        setLoading(false);
+        return;
+      }
+      const pat = await getPatient(prof.family_id);
+      setNeedsSetup(!pat);
+    } catch (err) {
+      console.error('Error checking patient:', err);
+      setNeedsSetup(true);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   if (loading) {
     return (

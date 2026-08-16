@@ -234,22 +234,6 @@ export function TodayScreen({ onTabChange }: { onTabChange?: (tab: 'today' | 'hi
 
   const resolvedEventsCount = events.filter(e => e.status === 'confirmed' || e.status === 'attention').length;
   const isAllEventsCompleted = events.length > 0 && resolvedEventsCount === events.length;
-  
-  useEffect(() => {
-    if (events.length > 0) {
-      const resolved = events.filter(e => e.status === 'confirmed' || e.status === 'attention').length;
-      const pending = events.length - resolved;
-      const lastEvent = events[events.length - 1];
-      console.log(`[DAILY CLOSURE] date=${localDate}`);
-      console.log(`events=${events.length}`);
-      console.log(`resolved=${resolved}`);
-      console.log(`pending=${pending}`);
-      console.log(`lastEvent=${lastEvent.time}`);
-      console.log(`lastEventStatus=${lastEvent.status}`);
-      console.log(`closureExists=${!!dailyClosure}`);
-      console.log(`canClose=${events.length > 0 && resolved === events.length && !dailyClosure}`);
-    }
-  }, [events, dailyClosure, localDate]);
 
   
   const handleCloseDay = async () => {
