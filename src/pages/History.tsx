@@ -1,116 +1,312 @@
 import React, { useEffect, useState } from 'react';
 import { MainLayout } from '../layouts/MainLayout';
-import { 
-  getCurrentProfile, 
-  getPatient, 
+import {
+  getCurrentProfile,
+  getPatient,
   getHistoricalMealLogs,
   getHistoricalMedicationLogs,
   getMealPhotoUrl,
   getHistoricalDailyClosures
 } from '../services/api';
-import { getLocalDateString, formatDateToTime, formatFriendlyDate } from '../utils/date';
+import { getLocalDateString, formatDateToTime, formatFriendlyDate, formatTime } from '../utils/date';
 import { Spinner } from '../components/ui/Spinner';
 import { UserProfile } from '../components/ui/UserProfile';
-import { TimelineItem } from '../components/timeline/TimelineItem';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, Coffee, Pill, CheckCircle2, Circle } from 'lucide-react';
 import { MealModal } from '../components/meals/MealModal';
 import { MedicationModal } from '../components/medications/MedicationModal';
-import type { TimelineEvent, MealEventData, MedicationEventData } from '../types/timeline';
+import type { MealEventData, MedicationEventData } from '../types/timeline';
 
-function HistoryDayGroup({ 
-  dateStr, 
-  events, 
-  closure,
-  onEditMeal,
-  onEditMed
-}: { 
-  key?: React.Key, 
-  dateStr: string, 
-  events: TimelineEvent[],
-  closure?: any,
-  onEditMeal: (event: MealEventData, dateStr: string) => void,
-  onEditMed: (event: MedicationEventData, dateStr: string) => void
-}) {
-  const [expanded, setExpanded] = useState(false);
-  
-  const friendly = formatFriendlyDate(dateStr);
+// ─── Types ───────────────────────────────────────────────────────────────────
 
+interface HistoryMealEntry {
+  id: string;
+  logId: string;
+  mealConfigId: string;
+  title: string;
+  time: string;         // meal_time or scheduled_time
+  consumption_status: 'normal' | 'partial' | 'none';
+  description: string | null;
+  notes: string | null;
+  photo_url: string | null;
+  photoSignedUrl: string | null;
+  creatorName: string;
+  created_at: string;
+  mealConfig: any;
+  log: any;
+}
+
+interface HistoryMedEntry {
+  id: string;
+  logId: string;
+  medicationId: string;
+  name: string;
+  dosage: string;
+  status: 'administered' | 'not_administered';
+  reason: string | null;
+  time: string;           // period scheduled_time
+  periodName: string;
+  creatorName: string;
+  created_at: string;
+  log: any;
+  medication: any;
+  periodId: string;
+}
+
+interface DayData {
+  dateStr: string;
+  meals: HistoryMealEntry[];
+  meds: HistoryMedEntry[];
+  closure: any | null;
+}
+
+// ─── Sub-component: individual meal row ──────────────────────────────────────
+
+function MealRow({ meal, onEdit }: { meal: HistoryMealEntry; onEdit: () => void }) {
+  const consumptionLabel =
+    meal.consumption_status === 'normal' ? 'Comeu normalmente' :
+    meal.consumption_status === 'partial' ? 'Comeu parcialmente' :
+    'Não comeu';
+
+  const consumptionColor =
+    meal.consumption_status === 'normal' ? 'text-green-700' :
+    meal.consumption_status === 'partial' ? 'text-yellow-700' :
+    'text-red-700';
 
   return (
-    <div className="mb-4">
-      <button 
-        onClick={() => setExpanded(!expanded)}
-        className="w-full flex flex-col p-4 bg-white rounded-xl border border-gray-100 shadow-sm"
-      >
-        <div className="w-full flex items-center justify-between mb-1">
-          <span className="font-semibold text-gray-900 uppercase text-xs tracking-wider">
-            {friendly}
-            {closure && <span className="ml-2 text-green-600">✓</span>}
-            {!closure && <span className="ml-2 text-gray-400">○</span>}
-          </span>
-          {expanded ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
+    <button
+      onClick={onEdit}
+      className="w-full text-left bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:border-gray-200 active:scale-[0.99] transition-all"
+    >
+      {meal.photoSignedUrl && (
+        <div className="w-full aspect-[4/3] bg-gray-100">
+          <img src={meal.photoSignedUrl} alt={meal.title} className="w-full h-full object-cover" />
         </div>
-        
-        {closure ? (
-          <div className="text-left">
-            <span className="text-[11px] text-gray-500">
-              Encerrado por {closure.closed_by_profile?.name || 'Familiar'} às {formatDateToTime(closure.closed_at)}
+      )}
+      <div className="p-4">
+        <div className="flex items-start justify-between gap-2 mb-1">
+          <div className="flex items-center gap-2">
+            <Coffee className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
+            <span className="font-semibold text-gray-900 text-sm">{meal.title}</span>
+          </div>
+          <span className={`text-xs font-medium shrink-0 ${consumptionColor}`}>{consumptionLabel}</span>
+        </div>
+
+        {meal.time && (
+          <p className="text-xs text-gray-400 ml-6 mb-2">
+            {formatTime(meal.time)} · Refeição realizada
+          </p>
+        )}
+
+        {meal.description && (
+          <p className="text-sm text-gray-600 ml-6 mb-2 italic">"{meal.description}"</p>
+        )}
+
+        <div className="ml-6 pt-2 border-t border-gray-50 flex items-center gap-1.5 mt-2">
+          <span className="text-[11px] text-gray-400">👤</span>
+          <span className="text-[11px] text-gray-500">
+            Registrado por <span className="font-medium text-gray-700">{meal.creatorName}</span>
+            {' '}às {formatDateToTime(meal.created_at)}
+          </span>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+// ─── Sub-component: individual medication row ─────────────────────────────────
+
+function MedRow({ med, onEdit }: { med: HistoryMedEntry; onEdit: () => void }) {
+  const isAdministered = med.status === 'administered';
+
+  return (
+    <button
+      onClick={onEdit}
+      className="w-full text-left bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:border-gray-200 active:scale-[0.99] transition-all p-4"
+    >
+      <div className="flex items-start justify-between gap-2 mb-1">
+        <div className="flex items-center gap-2">
+          <Pill className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
+          <div>
+            <span className="font-semibold text-gray-900 text-sm">{med.name}</span>
+            {med.dosage && <span className="text-xs text-gray-400 ml-1.5">{med.dosage}</span>}
+          </div>
+        </div>
+        <span className={`text-xs font-medium shrink-0 ${isAdministered ? 'text-green-700' : 'text-red-600'}`}>
+          {isAdministered ? '✓ Administrado' : '✗ Não administrado'}
+        </span>
+      </div>
+
+      <p className="text-xs text-gray-400 ml-6 mb-2">{med.periodName} · {formatTime(med.time)}</p>
+
+      {!isAdministered && med.reason && (
+        <p className="text-xs text-red-600 ml-6 mb-2">Motivo: {med.reason}</p>
+      )}
+
+      <div className="ml-6 pt-2 border-t border-gray-50 flex items-center gap-1.5 mt-2">
+        <span className="text-[11px] text-gray-400">👤</span>
+        <span className="text-[11px] text-gray-500">
+          Registrado por <span className="font-medium text-gray-700">{med.creatorName}</span>
+          {' '}às {formatDateToTime(med.created_at)}
+        </span>
+      </div>
+    </button>
+  );
+}
+
+// ─── Sub-component: Day Accordion ─────────────────────────────────────────────
+
+function HistoryDayGroup({
+  day,
+  onEditMeal,
+  onEditMed,
+}: {
+  day: DayData;
+  onEditMeal: (meal: HistoryMealEntry) => void;
+  onEditMed: (med: HistoryMedEntry) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const friendly = formatFriendlyDate(day.dateStr);
+  const { closure, meals, meds } = day;
+
+  const totalMeals = meals.length;
+  const totalMeds = meds.length;
+
+  return (
+    <div className="mb-3">
+      {/* Accordion header */}
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex flex-col p-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:border-gray-200 transition-all active:scale-[0.995]"
+      >
+        <div className="w-full flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            {closure ? (
+              <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+            ) : (
+              <Circle className="w-4 h-4 text-gray-300 shrink-0" />
+            )}
+            <span className="font-semibold text-gray-900 text-sm">
+              {friendly}
             </span>
           </div>
-        ) : (
-          <div className="text-left">
-            <span className="text-[11px] text-gray-500">Dia em aberto</span>
-          </div>
-        )}
-      </button>
-      
-      {expanded && (
-        <div className="mt-4 space-y-4 px-2">
+          {expanded
+            ? <ChevronUp className="w-4 h-4 text-gray-400 shrink-0" />
+            : <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
+          }
+        </div>
+
+        {/* Subtitle */}
+        <div className="mt-1.5 ml-6.5 text-left pl-[26px]">
           {closure ? (
-            <div className="flex items-center space-x-2 text-xs font-medium text-green-700 bg-green-50 px-3 py-2 rounded-lg mb-4">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              <span>DIA ENCERRADO</span>
+            <span className="text-[11px] text-gray-400">
+              Encerrado por <span className="font-medium">{closure.closed_by_profile?.name || 'Familiar'}</span>
+              {' '}às {formatDateToTime(closure.closed_at)}
+            </span>
+          ) : (
+            <span className="text-[11px] text-gray-400">Dia em aberto</span>
+          )}
+        </div>
+      </button>
+
+      {/* Accordion body */}
+      {expanded && (
+        <div className="mt-2 bg-gray-50/80 rounded-2xl border border-gray-100 p-4 space-y-6">
+
+          {/* Status banner */}
+          {closure ? (
+            <div className="flex items-center gap-2 text-xs font-semibold text-green-700 bg-green-50 border border-green-100 px-3 py-2.5 rounded-xl">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              DIA ENCERRADO
             </div>
           ) : (
-            <div className="flex items-center space-x-2 text-xs font-medium text-gray-600 bg-gray-50 px-3 py-2 rounded-lg mb-4">
-              <span className="text-lg leading-none">○</span>
-              <span>DIA EM ABERTO</span>
+            <div className="flex items-center gap-2 text-xs font-semibold text-gray-500 bg-white border border-gray-100 px-3 py-2.5 rounded-xl">
+              <Circle className="w-3.5 h-3.5" />
+              DIA EM ABERTO
             </div>
           )}
-          
-          <div className="h-px w-full bg-gray-100 my-2"></div>
 
-          {events.map((event, idx) => (
+          {/* Meals section */}
+          {meals.length > 0 && (
+            <div className="space-y-3">
+              <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                🍽 Refeições
+              </h4>
+              <div className="space-y-3">
+                {meals.map(meal => (
+                  <MealRow
+                    key={meal.logId}
+                    meal={meal}
+                    onEdit={() => onEditMeal(meal)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
 
-            <TimelineItem 
-              key={`${event.id}-${idx}`} 
-              event={event} 
-              onClick={() => {
-                if (event.type === 'meal') {
-                  onEditMeal(event as MealEventData, dateStr);
-                } else {
-                  onEditMed(event as MedicationEventData, dateStr);
-                }
-              }} 
-            />
-          ))}
+          {/* Medications section */}
+          {meds.length > 0 && (
+            <div className="space-y-3">
+              <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                💊 Medicamentos
+              </h4>
+              <div className="space-y-3">
+                {meds.map(med => (
+                  <MedRow
+                    key={med.logId}
+                    med={med}
+                    onEdit={() => onEditMed(med)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {meals.length === 0 && meds.length === 0 && (
+            <p className="text-sm text-gray-400 text-center py-4">Nenhum registro neste dia.</p>
+          )}
+
+          {/* Day summary */}
+          <div className="border-t border-gray-100 pt-4">
+            <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">
+              Resumo do dia
+            </h4>
+            <div className="space-y-1.5 text-xs text-gray-600">
+              <div className="flex justify-between">
+                <span>Refeições registradas</span>
+                <span className="font-semibold text-gray-900">{totalMeals}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Medicamentos registrados</span>
+                <span className="font-semibold text-gray-900">{totalMeds}</span>
+              </div>
+              <div className="flex justify-between mt-2 pt-2 border-t border-gray-100">
+                <span>Status</span>
+                <span className={`font-semibold ${closure ? 'text-green-700' : 'text-gray-500'}`}>
+                  {closure ? '✓ Encerrado' : '○ Em aberto'}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
   );
 }
 
+// ─── Main screen ──────────────────────────────────────────────────────────────
+
 export function HistoryScreen({ onTabChange }: { onTabChange?: (tab: 'today' | 'history' | 'routine') => void }) {
   const [loading, setLoading] = useState(true);
   const [patient, setPatient] = useState<any>(null);
-  const [groupedEvents, setGroupedEvents] = useState<Record<string, TimelineEvent[]>>({});
-  const [closures, setClosures] = useState<Record<string, any>>({});
   const [profile, setProfile] = useState<any>(null);
-  const [selectedMealEvent, setSelectedMealEvent] = useState<{ event: MealEventData, dateStr: string } | null>(null);
-  const [selectedMedEvent, setSelectedMedEvent] = useState<{ event: MedicationEventData, dateStr: string } | null>(null);
+  const [days, setDays] = useState<DayData[]>([]);
 
+  // Modal state — meal editing
+  const [selectedMeal, setSelectedMeal] = useState<{ meal: HistoryMealEntry; dateStr: string } | null>(null);
+  // Modal state — med editing
+  const [selectedMed, setSelectedMed] = useState<{ med: HistoryMedEntry; dateStr: string } | null>(null);
+
+  // All hooks declared before any conditional return ✓
   useEffect(() => {
     loadData();
   }, []);
@@ -126,92 +322,129 @@ export function HistoryScreen({ onTabChange }: { onTabChange?: (tab: 'today' | '
       if (!pat) return;
       setPatient(pat);
 
-      const localDate = getLocalDateString();
-      
-      const [mealLogs, medLogs, closuresData] = await Promise.all([
-        getHistoricalMealLogs(pat.id, localDate),
-        getHistoricalMedicationLogs(pat.id, localDate),
-        getHistoricalDailyClosures(pat.id, localDate)
+      // today's date string — used as strict upper bound
+      const today = getLocalDateString();
+
+      const [rawMealLogs, rawMedLogs, rawClosures] = await Promise.all([
+        getHistoricalMealLogs(pat.id, today),
+        getHistoricalMedicationLogs(pat.id, today),
+        getHistoricalDailyClosures(pat.id, today),
       ]);
-      
+
+      // Build closures map: date → closure object
       const closuresMap: Record<string, any> = {};
-      for (const c of closuresData) {
+      for (const c of rawClosures) {
+        // date comes back as "2026-08-15" string from Supabase DATE column
         closuresMap[c.date] = c;
       }
-      setClosures(closuresMap);
 
+      // Collect all unique dates from logs
+      const dateSet = new Set<string>();
+      for (const log of rawMealLogs) {
+        if (log.event_date) dateSet.add(log.event_date);
+      }
+      for (const log of rawMedLogs) {
+        if (log.event_date) dateSet.add(log.event_date);
+      }
+      // Also include dates with closure but no logs (edge case)
+      for (const c of rawClosures) {
+        if (c.date) dateSet.add(c.date);
+      }
 
+      // Sort dates descending (newest first) — pure string comparison works for ISO dates
+      const sortedDates = Array.from(dateSet).sort((a, b) => b.localeCompare(a));
 
-      const groups: Record<string, TimelineEvent[]> = {};
+      // Build meal entries per date
+      const mealsByDate: Record<string, HistoryMealEntry[]> = {};
+      for (const log of rawMealLogs) {
+        const d = log.event_date;
+        if (!d) continue;
+        if (!mealsByDate[d]) mealsByDate[d] = [];
 
-      for (const log of mealLogs) {
-        const dateStr = log.event_date;
-        if (!groups[dateStr]) groups[dateStr] = [];
-
-        let photoSignedUrl = null;
+        // Fetch signed URL only if photo_url exists
+        let photoSignedUrl: string | null = null;
         if (log.photo_url) {
           photoSignedUrl = await getMealPhotoUrl(log.photo_url);
         }
 
-        const mealConfig = log.meal_config || { name: 'Refeição', scheduled_time: log.meal_time || '00:00:00' };
+        const mealConfig = log.meal_config || {
+          name: 'Refeição',
+          scheduled_time: log.meal_time || '00:00:00',
+        };
 
-        groups[dateStr].push({
+        mealsByDate[d].push({
           id: log.meal_config_id || log.id,
-          type: 'meal',
+          logId: log.id,
+          mealConfigId: log.meal_config_id,
+          title: mealConfig.name || 'Refeição',
           time: log.meal_time || mealConfig.scheduled_time || '00:00:00',
-          title: mealConfig.name,
-          status: 'confirmed',
+          consumption_status: log.consumption_status ?? 'normal',
+          description: log.description ?? null,
+          notes: log.notes ?? null,
+          photo_url: log.photo_url ?? null,
+          photoSignedUrl,
+          creatorName: log.creator?.name || 'Familiar',
+          created_at: log.created_at,
           mealConfig,
           log,
-          photoSignedUrl
         });
       }
 
-      const medLogsByDateAndPeriod: Record<string, Record<string, any[]>> = {};
-      
-      for (const log of medLogs) {
-        const dateStr = log.event_date;
-        const periodId = log.medication?.medication_period_id || 'unknown_period';
-        
-        if (!medLogsByDateAndPeriod[dateStr]) medLogsByDateAndPeriod[dateStr] = {};
-        if (!medLogsByDateAndPeriod[dateStr][periodId]) medLogsByDateAndPeriod[dateStr][periodId] = [];
-        
-        medLogsByDateAndPeriod[dateStr][periodId].push(log);
+      // Sort meals within each date by time
+      for (const d of Object.keys(mealsByDate)) {
+        mealsByDate[d].sort((a, b) => a.time.localeCompare(b.time));
       }
 
-      for (const dateStr of Object.keys(medLogsByDateAndPeriod)) {
-        if (!groups[dateStr]) groups[dateStr] = [];
-        
-        for (const periodId of Object.keys(medLogsByDateAndPeriod[dateStr])) {
-          const logs = medLogsByDateAndPeriod[dateStr][periodId];
-          const period = logs[0].medication?.period || { id: periodId, time: '00:00:00' };
-          const medications = logs.map(l => l.medication).filter(Boolean);
-          const fallbackTime = logs[0].created_at ? logs[0].created_at.substring(11, 16) + ':00' : '00:00:00';
-          
-          groups[dateStr].push({
-            id: periodId,
-            type: 'medication_period',
-            time: period.time || fallbackTime,
-            title: 'Medicamentos',
-            status: 'confirmed',
-            period,
-            medications,
-            logs
-          });
-        }
+      // Build medication entries per date
+      const medsByDate: Record<string, HistoryMedEntry[]> = {};
+      for (const log of rawMedLogs) {
+        const d = log.event_date;
+        if (!d) continue;
+        if (!medsByDate[d]) medsByDate[d] = [];
+
+        const medication = log.medication || null;
+        const period = medication?.period || null;
+
+        medsByDate[d].push({
+          id: log.medication_id,
+          logId: log.id,
+          medicationId: log.medication_id,
+          name: medication?.name || 'Medicamento',
+          dosage: medication?.dosage || '',
+          status: log.status,
+          reason: log.reason ?? null,
+          time: period?.scheduled_time || '00:00:00',
+          periodName: period?.name || 'Medicamentos',
+          periodId: medication?.medication_period_id || 'unknown',
+          creatorName: log.creator?.name || 'Familiar',
+          created_at: log.created_at,
+          log,
+          medication,
+        });
       }
 
-      for (const dateStr of Object.keys(groups)) {
-        groups[dateStr].sort((a, b) => a.time.localeCompare(b.time));
+      // Sort meds within each date by period time
+      for (const d of Object.keys(medsByDate)) {
+        medsByDate[d].sort((a, b) => a.time.localeCompare(b.time));
       }
 
-      setGroupedEvents(groups);
+      // Assemble final DayData array
+      const assembled: DayData[] = sortedDates.map(dateStr => ({
+        dateStr,
+        meals: mealsByDate[dateStr] ?? [],
+        meds: medsByDate[dateStr] ?? [],
+        closure: closuresMap[dateStr] ?? null,
+      }));
+
+      setDays(assembled);
     } catch (err) {
-      console.error("Error loading history:", err);
+      console.error('[HistoryScreen] loadData error:', err);
     } finally {
       setLoading(false);
     }
   }
+
+  // ── Conditional returns — AFTER all hooks ──
 
   if (loading) {
     return (
@@ -233,11 +466,39 @@ export function HistoryScreen({ onTabChange }: { onTabChange?: (tab: 'today' | '
     );
   }
 
-  const sortedDates = Object.keys(groupedEvents).sort((a, b) => b.localeCompare(a));
+  // Convert HistoryMealEntry → MealEventData shape expected by MealModal
+  function toMealEvent(meal: HistoryMealEntry): MealEventData {
+    return {
+      id: meal.mealConfigId || meal.id,
+      type: 'meal',
+      time: meal.time,
+      title: meal.title,
+      status: 'confirmed',
+      mealConfig: meal.mealConfig,
+      log: meal.log,
+      photoSignedUrl: meal.photoSignedUrl,
+    };
+  }
+
+  // Convert HistoryMedEntry → MedicationEventData shape expected by MedicationModal
+  function toMedEvent(med: HistoryMedEntry): MedicationEventData {
+    return {
+      id: med.periodId,
+      type: 'medication_period',
+      time: med.time,
+      title: med.periodName,
+      status: med.status === 'administered' ? 'confirmed' : 'attention',
+      period: med.medication?.period || { id: med.periodId, scheduled_time: med.time, name: med.periodName },
+      medications: med.medication ? [med.medication] : [],
+      logs: [med.log],
+    };
+  }
 
   return (
     <MainLayout activeTab="history" onTabChange={onTabChange}>
       <div className="max-w-md mx-auto w-full">
+
+        {/* Header */}
         <div className="bg-white px-6 pt-12 pb-6 sticky top-0 z-30 border-b border-gray-100/50 backdrop-blur-xl">
           <div className="flex items-center justify-between mb-2">
             <h1 className="text-2xl font-bold tracking-tight text-gray-900">Histórico</h1>
@@ -248,47 +509,49 @@ export function HistoryScreen({ onTabChange }: { onTabChange?: (tab: 'today' | '
           </p>
         </div>
 
-        <div className="p-6">
-          {sortedDates.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-gray-500">Nenhum registro histórico encontrado.</p>
+        {/* List */}
+        <div className="p-4">
+          {days.length === 0 ? (
+            <div className="text-center py-16">
+              <p className="text-gray-400 text-sm">Nenhum registro histórico encontrado.</p>
+              <p className="text-gray-300 text-xs mt-1">Os registros dos dias anteriores aparecerão aqui.</p>
             </div>
           ) : (
-            sortedDates.map(dateStr => (
-              <HistoryDayGroup 
-                key={dateStr}
-                dateStr={dateStr}
-                events={groupedEvents[dateStr]}
-                closure={closures[dateStr]}
-                onEditMeal={(event, date) => setSelectedMealEvent({ event, dateStr: date })}
-                onEditMed={(event, date) => setSelectedMedEvent({ event, dateStr: date })}
+            days.map(day => (
+              <HistoryDayGroup
+                key={day.dateStr}
+                day={day}
+                onEditMeal={(meal) => setSelectedMeal({ meal, dateStr: day.dateStr })}
+                onEditMed={(med) => setSelectedMed({ med, dateStr: day.dateStr })}
               />
             ))
           )}
         </div>
       </div>
-      
-      {/* Modals */}
-      {selectedMealEvent && patient && profile && (
-        <MealModal 
-          isOpen={!!selectedMealEvent}
-          onClose={() => setSelectedMealEvent(null)}
-          event={selectedMealEvent.event}
+
+      {/* Meal edit modal */}
+      {selectedMeal && patient && profile && (
+        <MealModal
+          isOpen={!!selectedMeal}
+          onClose={() => setSelectedMeal(null)}
+          event={toMealEvent(selectedMeal.meal)}
           patientId={patient.id}
           profileId={profile.id}
-          eventDate={selectedMealEvent.dateStr}
-          onSuccess={() => { loadData(); setSelectedMealEvent(null); }}
+          eventDate={selectedMeal.dateStr}
+          onSuccess={() => { loadData(); setSelectedMeal(null); }}
         />
       )}
-      {selectedMedEvent && patient && profile && (
-        <MedicationModal 
-          isOpen={!!selectedMedEvent}
-          onClose={() => setSelectedMedEvent(null)}
-          event={selectedMedEvent.event}
+
+      {/* Medication edit modal */}
+      {selectedMed && patient && profile && (
+        <MedicationModal
+          isOpen={!!selectedMed}
+          onClose={() => setSelectedMed(null)}
+          event={toMedEvent(selectedMed.med)}
           patientId={patient.id}
           profileId={profile.id}
-          eventDate={selectedMedEvent.dateStr}
-          onSuccess={() => { loadData(); setSelectedMedEvent(null); }}
+          eventDate={selectedMed.dateStr}
+          onSuccess={() => { loadData(); setSelectedMed(null); }}
         />
       )}
     </MainLayout>
