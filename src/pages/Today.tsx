@@ -293,7 +293,7 @@ export function TodayScreen({ onTabChange }: { onTabChange?: (tab: 'today' | 'hi
               <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400">Manhã</h3>
               <div className="space-y-3 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px before:h-full before:w-0.5 before:bg-gray-100">
                 {morning.map(event => (
-                  <TimelineItem 
+                  <TimelineItem profileId={profile?.id} 
                     key={event.id} 
                     event={event} 
                     onClick={() => event.type === 'meal' ? setSelectedMealEvent(event as MealEventData) : setSelectedMedEvent(event as MedicationEventData)} 
@@ -308,7 +308,7 @@ export function TodayScreen({ onTabChange }: { onTabChange?: (tab: 'today' | 'hi
               <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400">Tarde</h3>
               <div className="space-y-3 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px before:h-full before:w-0.5 before:bg-gray-100">
                 {afternoon.map(event => (
-                  <TimelineItem 
+                  <TimelineItem profileId={profile?.id} 
                     key={event.id} 
                     event={event} 
                     onClick={() => event.type === 'meal' ? setSelectedMealEvent(event as MealEventData) : setSelectedMedEvent(event as MedicationEventData)} 
@@ -323,7 +323,7 @@ export function TodayScreen({ onTabChange }: { onTabChange?: (tab: 'today' | 'hi
               <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400">Noite</h3>
               <div className="space-y-3 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px before:h-full before:w-0.5 before:bg-gray-100">
                 {night.map(event => (
-                  <TimelineItem 
+                  <TimelineItem profileId={profile?.id} 
                     key={event.id} 
                     event={event} 
                     onClick={() => event.type === 'meal' ? setSelectedMealEvent(event as MealEventData) : setSelectedMedEvent(event as MedicationEventData)} 

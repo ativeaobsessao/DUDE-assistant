@@ -141,7 +141,7 @@ export async function getHistoricalMealLogs(patientId: string, beforeDate: strin
   // Use strict .lt (less-than) to exclude today — today belongs to TodayScreen
   const { data, error } = await supabase
     .from('meal_logs')
-    .select('*, creator:profiles!meal_logs_created_by_fkey(name), meal_config:meal_configs(*)')
+    .select('*, creator:profiles!meal_logs_created_by_fkey(name), updater:profiles!meal_logs_updated_by_fkey(name), meal_config:meal_configs(*)')
     .eq('patient_id', patientId)
     .lt('event_date', beforeDate)
     .order('event_date', { ascending: false })
@@ -158,7 +158,7 @@ export async function getHistoricalMedicationLogs(patientId: string, beforeDate:
   // Use strict .lt (less-than) to exclude today
   const { data, error } = await supabase
     .from('medication_logs')
-    .select('*, medication:medications(*, period:medication_periods(*)), creator:profiles!medication_logs_created_by_fkey(name)')
+    .select('*, medication:medications(*, period:medication_periods(*)), creator:profiles!medication_logs_created_by_fkey(name), updater:profiles!medication_logs_updated_by_fkey(name)')
     .eq('patient_id', patientId)
     .lt('event_date', beforeDate)
     .order('event_date', { ascending: false })
@@ -174,7 +174,7 @@ export async function getHistoricalMedicationLogs(patientId: string, beforeDate:
 export async function getMealLogs(patientId: string, eventDate: string): Promise<any[]> {
   const { data, error } = await supabase
     .from('meal_logs')
-    .select('*, creator:profiles!meal_logs_created_by_fkey(name)')
+    .select('*, creator:profiles!meal_logs_created_by_fkey(name), updater:profiles!meal_logs_updated_by_fkey(name)')
     .eq('patient_id', patientId)
     .eq('event_date', eventDate);
 
@@ -185,7 +185,7 @@ export async function getMealLogs(patientId: string, eventDate: string): Promise
 export async function getMedicationLogs(patientId: string, eventDate: string): Promise<any[]> {
   const { data, error } = await supabase
     .from('medication_logs')
-    .select('*, creator:profiles!medication_logs_created_by_fkey(name)')
+    .select('*, creator:profiles!medication_logs_created_by_fkey(name), updater:profiles!medication_logs_updated_by_fkey(name)')
     .eq('patient_id', patientId)
     .eq('event_date', eventDate);
 
@@ -197,7 +197,7 @@ export async function createMealLog(log: Database['public']['Tables']['meal_logs
   const { data, error } = await supabase
     .from('meal_logs')
     .insert(log as any)
-    .select('*, creator:profiles!meal_logs_created_by_fkey(name)')
+    .select('*, creator:profiles!meal_logs_created_by_fkey(name), updater:profiles!meal_logs_updated_by_fkey(name)')
     .single();
 
   if (error) {
@@ -215,7 +215,7 @@ export async function updateMealLog(id: string, log: Database['public']['Tables'
     // @ts-expect-error Supabase strict types fail here
     .update(log)
     .eq('id', id)
-    .select('*, creator:profiles!meal_logs_created_by_fkey(name)')
+    .select('*, creator:profiles!meal_logs_created_by_fkey(name), updater:profiles!meal_logs_updated_by_fkey(name)')
     .single();
 
   if (error) {

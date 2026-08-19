@@ -6,12 +6,13 @@ import { Badge } from '../ui/Badge';
 import type { TimelineEvent } from '../../types/timeline';
 
 export interface TimelineItemProps {
+  profileId?: string;
   event: TimelineEvent;
   onClick: () => void;
   key?: React.Key;
 }
 
-export function TimelineItem({ event, onClick }: TimelineItemProps) {
+export function TimelineItem({ event, onClick, profileId }: TimelineItemProps) {
   
   const isMeal = event.type === 'meal';
   const Icon = isMeal ? Coffee : Pill;
@@ -113,25 +114,26 @@ export function TimelineItem({ event, onClick }: TimelineItemProps) {
             <p className="text-sm text-gray-500 mt-2 truncate">"{event.log.description}"</p>
           )}
           
-          {(event.status === 'confirmed' || event.status === 'attention') && (
-            <div className="mt-4 pt-3 border-t border-gray-900/5 flex flex-col space-y-0.5">
-              <div className="flex items-center text-xs text-gray-500">
-                <span className="mr-1.5 opacity-70">👤</span>
-                <span className="font-medium text-gray-700">Registrado por {
-                  event.type === 'meal' 
-                    ? (event.log?.creator?.name || 'Familiar')
-                    : (event.logs?.[0]?.creator?.name || 'Familiar')
-                }</span>
+          {(event.status === 'confirmed' || event.status === 'attention') && (() => {
+            const logCreatorId = event.type === 'meal' ? event.log?.created_by : event.logs?.[0]?.created_by;
+            const logCreatorName = event.type === 'meal' ? (event.log?.creator?.name || 'Familiar') : (event.logs?.[0]?.creator?.name || 'Familiar');
+            const logCreatedAt = event.type === 'meal' ? event.log?.created_at : event.logs?.[0]?.created_at;
+            
+            // Do not show if the current user is the one who created it
+            if (profileId && logCreatorId === profileId) return null;
+
+            return (
+              <div className="mt-4 pt-3 border-t border-gray-900/5 flex flex-col space-y-0.5">
+                <div className="flex items-center text-xs text-gray-500">
+                  <span className="mr-1.5 opacity-70">👤</span>
+                  <span className="font-medium text-gray-700">Registrado por {logCreatorName}</span>
+                </div>
+                <div className="text-[11px] text-gray-400 pl-5">
+                  Registrado às {logCreatedAt ? formatDateToTime(new Date(logCreatedAt)) : ''}
+                </div>
               </div>
-              <div className="text-[11px] text-gray-400 pl-5">
-                Registrado às {formatDateToTime(new Date(
-                  event.type === 'meal' 
-                    ? event.log?.created_at 
-                    : event.logs?.[0]?.created_at
-                ))}
-              </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
       </button>
     </div>

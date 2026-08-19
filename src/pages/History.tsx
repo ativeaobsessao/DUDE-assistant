@@ -62,7 +62,7 @@ interface DayData {
 
 // ─── Sub-component: individual meal row ──────────────────────────────────────
 
-function MealRow({ meal, onEdit }: { meal: HistoryMealEntry; onEdit: () => void }) {
+function MealRow({ meal, onEdit, profileId }: { meal: HistoryMealEntry; onEdit: () => void; profileId?: string }) {
   const consumptionLabel =
     meal.consumption_status === 'normal' ? 'Comeu normalmente' :
     meal.consumption_status === 'partial' ? 'Comeu parcialmente' :
@@ -103,11 +103,15 @@ function MealRow({ meal, onEdit }: { meal: HistoryMealEntry; onEdit: () => void 
         )}
 
         <div className="ml-6 pt-2 border-t border-gray-50 flex items-center gap-1.5 mt-2">
-          <span className="text-[11px] text-gray-400">👤</span>
-          <span className="text-[11px] text-gray-500">
-            Registrado por <span className="font-medium text-gray-700">{meal.creatorName}</span>
-            {' '}às {formatDateToTime(meal.created_at)}
-          </span>
+          {profileId && meal.created_by === profileId ? null : (
+            <>
+              <span className="text-[11px] text-gray-400">👤</span>
+              <span className="text-[11px] text-gray-500">
+                Registrado por <span className="font-medium text-gray-700">{meal.creatorName}</span>
+                {' '}às {formatDateToTime(meal.created_at)}
+              </span>
+            </>
+          )}
         </div>
       </div>
     </button>
@@ -116,7 +120,7 @@ function MealRow({ meal, onEdit }: { meal: HistoryMealEntry; onEdit: () => void 
 
 // ─── Sub-component: individual medication row ─────────────────────────────────
 
-function MedRow({ med, onEdit }: { med: HistoryMedEntry; onEdit: () => void }) {
+function MedRow({ med, onEdit, profileId }: { med: HistoryMedEntry; onEdit: () => void; profileId?: string }) {
   const isAdministered = med.status === 'administered';
 
   return (
@@ -144,11 +148,15 @@ function MedRow({ med, onEdit }: { med: HistoryMedEntry; onEdit: () => void }) {
       )}
 
       <div className="ml-6 pt-2 border-t border-gray-50 flex items-center gap-1.5 mt-2">
-        <span className="text-[11px] text-gray-400">👤</span>
-        <span className="text-[11px] text-gray-500">
-          Registrado por <span className="font-medium text-gray-700">{med.creatorName}</span>
-          {' '}às {formatDateToTime(med.created_at)}
-        </span>
+        {profileId && med.created_by === profileId ? null : (
+          <>
+            <span className="text-[11px] text-gray-400">👤</span>
+            <span className="text-[11px] text-gray-500">
+              Registrado por <span className="font-medium text-gray-700">{med.creatorName}</span>
+              {' '}às {formatDateToTime(med.created_at)}
+            </span>
+          </>
+        )}
       </div>
     </button>
   );
@@ -157,6 +165,7 @@ function MedRow({ med, onEdit }: { med: HistoryMedEntry; onEdit: () => void }) {
 // ─── Sub-component: Day Accordion ─────────────────────────────────────────────
 
 function HistoryDayGroup({
+  profileId,
   day,
   onEditMeal,
   onEditMed,
@@ -168,6 +177,7 @@ function HistoryDayGroup({
   onEditMed: (med: HistoryMedEntry) => void;
   onCloseDay?: (date: string) => void;
   isClosingDay?: boolean;
+  profileId?: string;
 }) {
   const [expanded, setExpanded] = useState(false);
   const friendly = formatFriendlyDate(day.dateStr);
@@ -259,7 +269,7 @@ function HistoryDayGroup({
               </h4>
               <div className="space-y-3">
                 {meals.map(meal => (
-                  <MealRow
+                  <MealRow profileId={profileId}
                     key={meal.logId}
                     meal={meal}
                     onEdit={() => onEditMeal(meal)}
@@ -277,7 +287,7 @@ function HistoryDayGroup({
               </h4>
               <div className="space-y-3">
                 {meds.map(med => (
-                  <MedRow
+                  <MedRow profileId={profileId}
                     key={med.logId}
                     med={med}
                     onEdit={() => onEditMed(med)}
@@ -559,7 +569,7 @@ export function HistoryScreen({ onTabChange }: { onTabChange?: (tab: 'today' | '
             </div>
           ) : (
             days.map(day => (
-              <HistoryDayGroup
+              <HistoryDayGroup profileId={profile?.id}
                 key={day.dateStr}
                 day={day}
                 onEditMeal={(meal) => setSelectedMeal({ meal, dateStr: day.dateStr })}
