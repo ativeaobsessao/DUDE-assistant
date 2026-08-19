@@ -6,7 +6,8 @@ import {
   getHistoricalMealLogs,
   getHistoricalMedicationLogs,
   getMealPhotoUrl,
-  getHistoricalDailyClosures
+  getHistoricalDailyClosures,
+  createDailyClosure
 } from '../services/api';
 import { getLocalDateString, formatDateToTime, formatFriendlyDate, formatTime } from '../utils/date';
 import { Spinner } from '../components/ui/Spinner';
@@ -159,10 +160,14 @@ function HistoryDayGroup({
   day,
   onEditMeal,
   onEditMed,
+  onCloseDay,
+  isClosingDay,
 }: {
   day: DayData;
   onEditMeal: (meal: HistoryMealEntry) => void;
   onEditMed: (med: HistoryMedEntry) => void;
+  onCloseDay?: (date: string) => void;
+  isClosingDay?: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
   const friendly = formatFriendlyDate(day.dateStr);
@@ -219,9 +224,30 @@ function HistoryDayGroup({
               DIA ENCERRADO
             </div>
           ) : (
-            <div className="flex items-center gap-2 text-xs font-semibold text-gray-500 bg-white border border-gray-100 px-3 py-2.5 rounded-xl">
-              <Circle className="w-3.5 h-3.5" />
-              DIA EM ABERTO
+            <div className="flex items-center justify-between text-xs font-semibold text-gray-500 bg-white border border-gray-100 px-3 py-2.5 rounded-xl shadow-sm">
+              <div className="flex items-center gap-2">
+                <Circle className="w-3.5 h-3.5" />
+                DIA EM ABERTO
+              </div>
+              {onCloseDay && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCloseDay(day.dateStr);
+                  }}
+                  disabled={isClosingDay}
+                  className="px-3 py-1.5 bg-black text-white rounded-lg active:scale-95 transition-all disabled:opacity-50 font-medium tracking-wide flex items-center gap-1.5"
+                >
+                  {isClosingDay ? (
+                    <>
+                      <Spinner className="w-3 h-3 text-white" />
+                      <span>Encerrando...</span>
+                    </>
+                  ) : (
+                    'Encerrar Dia'
+                  )}
+                </button>
+              )}
             </div>
           )}
 
@@ -305,11 +331,26 @@ export function HistoryScreen({ onTabChange }: { onTabChange?: (tab: 'today' | '
   const [selectedMeal, setSelectedMeal] = useState<{ meal: HistoryMealEntry; dateStr: string } | null>(null);
   // Modal state — med editing
   const [selectedMed, setSelectedMed] = useState<{ med: HistoryMedEntry; dateStr: string } | null>(null);
+  const [closingDateStr, setClosingDateStr] = useState<string | null>(null);
 
   // All hooks declared before any conditional return ✓
   useEffect(() => {
     loadData();
   }, []);
+
+  async function handleCloseDay(dateStr: string) {
+    if (!profile || !patient) return;
+    setClosingDateStr(dateStr);
+    try {
+      await createDailyClosure(profile.family_id, patient.id, dateStr, profile.id);
+      await loadData();
+    } catch (err) {
+      console.error(err);
+      alert('Erro ao encerrar o dia.');
+    } finally {
+      setClosingDateStr(null);
+    }
+  }
 
   async function loadData() {
     setLoading(true);
@@ -523,6 +564,8 @@ export function HistoryScreen({ onTabChange }: { onTabChange?: (tab: 'today' | '
                 day={day}
                 onEditMeal={(meal) => setSelectedMeal({ meal, dateStr: day.dateStr })}
                 onEditMed={(med) => setSelectedMed({ med, dateStr: day.dateStr })}
+                onCloseDay={handleCloseDay}
+                isClosingDay={closingDateStr === day.dateStr}
               />
             ))
           )}
