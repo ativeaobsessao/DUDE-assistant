@@ -62,25 +62,9 @@ export default function App() {
       }
 
       if (!hasCheckedContext) {
-        try {
-          const memberships = await getMyFamilyMemberships();
-          if (memberships.length > 0) {
-            const currentValid = memberships.some(m => m.family_id === prof.family_id);
-            if (memberships.length === 1 && currentValid) {
-              // Auto-select and skip the screen to restore original flow!
-              setHasCheckedContext(true);
-            } else {
-              setNeedsContextSelection(true);
-              setLoading(false);
-              return;
-            }
-          } else {
-            setHasCheckedContext(true);
-          }
-        } catch (err) {
-          console.error('Error fetching memberships, falling back to basic flow:', err);
-          setHasCheckedContext(true);
-        }
+        setNeedsContextSelection(true);
+        setLoading(false);
+        return;
       }
 
       const pat = await getPatient(prof.family_id);

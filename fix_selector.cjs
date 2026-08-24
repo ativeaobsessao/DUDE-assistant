@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+const fs = require('fs');
+let code = `import React, { useEffect, useState } from 'react';
 import { getMyFamilyMemberships, getPatient, setActiveFamily, getPatientPhotoUrl } from '../services/api';
-import { supabase } from '../services/supabase';
 import { Spinner } from '../components/ui/Spinner';
-import { User, LogOut } from 'lucide-react';
+import { User } from 'lucide-react';
 
 export function ContextSelectorScreen({ onSelect }: { onSelect: () => void }) {
   const [loading, setLoading] = useState(true);
@@ -117,20 +117,9 @@ export function ContextSelectorScreen({ onSelect }: { onSelect: () => void }) {
             ))
           )}
         </div>
-        
-        <div className="pt-8 text-center">
-           <button 
-             onClick={async () => {
-                await supabase.auth.signOut();
-                window.location.href = '/';
-             }} 
-             className="inline-flex items-center text-sm text-gray-400 hover:text-gray-600 font-medium transition-colors"
-           >
-             <LogOut className="w-4 h-4 mr-2" />
-             Sair da conta
-           </button>
-        </div>
       </div>
     </div>
   );
 }
+`;
+fs.writeFileSync('src/pages/ContextSelector.tsx', code);
