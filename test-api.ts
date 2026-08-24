@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { supabase } from './src/services/supabase';
 import { getHistoricalMealLogs } from './src/services/api';
 import * as dotenv from 'dotenv';

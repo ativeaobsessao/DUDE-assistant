@@ -7,11 +7,17 @@ import { RoutineScreen } from './pages/Routine';
 import { SetupScreen } from './pages/Setup';
 import { HistoryScreen } from './pages/History';
 import { Spinner } from './components/ui/Spinner';
+import { InviteScreen } from './pages/InviteScreen';
+import { ContextSelectorScreen } from './pages/ContextSelector';
+import { getMyFamilyMemberships } from './services/api';
+
 
 export default function App() {
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [needsSetup, setNeedsSetup] = useState(false);
+  const [needsContextSelection, setNeedsContextSelection] = useState(false);
+  const [hasCheckedContext, setHasCheckedContext] = useState(false);
   const [currentTab, setCurrentTab] = useState<'today' | 'history' | 'routine'>('today');
 
   useEffect(() => {
@@ -41,12 +47,29 @@ export default function App() {
 
   async function checkPatient() {
     try {
+      const pendingInvite = sessionStorage.getItem('pending_invite');
+      if (pendingInvite) {
+        sessionStorage.removeItem('pending_invite');
+        window.location.href = `/invite/${pendingInvite}`;
+        return;
+      }
+
       const prof = await getCurrentProfile();
       if (!prof) {
         setNeedsSetup(true);
         setLoading(false);
         return;
       }
+
+      if (!hasCheckedContext) {
+        const memberships = await getMyFamilyMemberships();
+        if (memberships.length > 0) {
+          setNeedsContextSelection(true);
+          setLoading(false);
+          return;
+        }
+      }
+
       const pat = await getPatient(prof.family_id);
       setNeedsSetup(!pat);
     } catch (err) {
@@ -54,6 +77,14 @@ export default function App() {
       setNeedsSetup(true);
     } finally {
       setLoading(false);
+    }
+  }
+
+  const pathname = window.location.pathname;
+  if (pathname.startsWith('/invite/')) {
+    const token = pathname.split('/')[2];
+    if (token) {
+      return <InviteScreen token={token} />;
     }
   }
 
@@ -67,6 +98,19 @@ export default function App() {
 
   if (!session) {
     return <LoginScreen />;
+  }
+
+  if (needsContextSelection) {
+    return (
+      <ContextSelectorScreen 
+        onSelect={() => {
+          setNeedsContextSelection(false);
+          setHasCheckedContext(true);
+          setLoading(true);
+          checkPatient();
+        }} 
+      />
+    );
   }
 
   if (needsSetup) {

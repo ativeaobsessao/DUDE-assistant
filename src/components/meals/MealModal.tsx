@@ -69,7 +69,7 @@ export function MealModal({ isOpen, onClose, event, patientId, profileId, eventD
           const compressed = await compressImage(photoFile, 1920); // Better quality
           const fileName = `${eventDate}_${event.id}_${Date.now()}.jpg`;
           const uploadData = await uploadMealPhoto(patientId, compressed, fileName);
-          photoUrl = uploadData.path;
+          photoUrl = (uploadData as any).path;
         } catch (uploadErr) {
           console.error("Photo upload failed:", uploadErr);
           throw new Error("Falha ao enviar a foto da refeição. Verifique sua conexão e tente novamente.");

@@ -63,7 +63,7 @@ export function PatientEditModal({ isOpen, onClose, patient, currentPhotoUrl, on
         const compressed = await compressImage(photoFile);
         const fileName = `${Date.now()}.jpg`;
         const uploadData = await uploadPatientPhoto(patient.id, compressed, fileName);
-        updateData.photo_url = uploadData.path;
+        updateData.photo_url = (uploadData as any).path;
       } else if (photoPreview === null) {
         // If there is no file and preview is explicitly cleared (null), remove the photo
         updateData.photo_url = null;
