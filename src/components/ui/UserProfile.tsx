@@ -1,5 +1,6 @@
 // @ts-nocheck
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { supabase } from '../../services/supabase';
 import { LogOut, User, Camera, Lock, UserPen, Users } from 'lucide-react';
 import { FamilyModal } from './FamilyModal';
@@ -220,15 +221,17 @@ export function UserProfile() {
     </div>
 
 
-      {showFamilyModal && profile?.family_id && (
+      {showFamilyModal && profile?.family_id && createPortal(
         <FamilyModal 
           familyId={profile.family_id} 
           currentUserId={profile.id}
           onClose={() => setShowFamilyModal(false)} 
-        />
+        />,
+        document.body
       )}
       
-      {showNameModal && (
+      {showNameModal && createPortal(
+(
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
             <h3 className="text-lg font-bold text-gray-900 mb-2">Alterar Nome</h3>
@@ -263,8 +266,11 @@ export function UserProfile() {
             </form>
           </div>
         </div>
+      ),
+        document.body
       )}
-      {showPasswordModal && (
+      {showPasswordModal && createPortal(
+(
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
             <h3 className="text-lg font-bold text-gray-900 mb-2">Alterar Senha</h3>
@@ -299,6 +305,8 @@ export function UserProfile() {
             </form>
           </div>
         </div>
+      ),
+        document.body
       )}
     </>
   );
