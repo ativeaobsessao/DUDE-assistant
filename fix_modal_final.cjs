@@ -1,95 +1,9 @@
-// @ts-nocheck
-import React, { useState, useEffect } from 'react';
-import { X, Users, UserPlus, Trash2, Link } from 'lucide-react';
-import { Spinner } from './Spinner';
-import { Button } from './Button';
-import { getFamilyMembers, getFamilyInvites, createFamilyInvite, revokeFamilyInvite } from '../../services/api';
+const fs = require('fs');
+let code = fs.readFileSync('src/components/ui/FamilyModal.tsx', 'utf8');
+const returnStartIndex = code.indexOf('return (');
+const codeBeforeReturn = code.substring(0, returnStartIndex);
 
-interface FamilyModalProps {
-  familyId: string;
-  currentUserId: string;
-  onClose: () => void;
-}
-
-export function FamilyModal({ familyId, currentUserId, onClose }: FamilyModalProps) {
-  const [members, setMembers] = useState<any[]>([]);
-  const [invites, setInvites] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(false);
-  const [error, setError] = useState('');
-  
-  const [showInviteModal, setShowInviteModal] = useState(false);
-  const [inviteLink, setInviteLink] = useState('');
-  
-  const isAdmin = members.find(m => m.user_id === currentUserId)?.role === 'ADMIN';
-
-  useEffect(() => {
-    loadData();
-  }, [familyId]);
-
-  async function loadData() {
-    try {
-      const [m, i] = await Promise.all([
-        getFamilyMembers(familyId),
-        getFamilyInvites(familyId)
-      ]);
-      setMembers(m);
-      setInvites(i);
-    } catch (err: any) {
-      setError(err.message || 'Erro ao carregar dados da família.');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleCreateInvite() {
-    setActionLoading(true);
-    setError('');
-    try {
-      const res = await createFamilyInvite();
-      const origin = window.location.origin;
-      setInviteLink(`${origin}/invite/${res.token}`);
-      loadData();
-    } catch (err: any) {
-      setError(err.message || 'Não foi possível gerar o convite.');
-    } finally {
-      setActionLoading(false);
-    }
-  }
-
-  async function handleRevoke(inviteId: string) {
-    setActionLoading(true);
-    try {
-      await revokeFamilyInvite(inviteId);
-      loadData();
-    } catch (err: any) {
-      setError(err.message || 'Erro ao revogar convite.');
-    } finally {
-      setActionLoading(false);
-    }
-  }
-
-  async function handleCopy() {
-    if (inviteLink) {
-      if (navigator.share) {
-        try {
-          await navigator.share({
-            title: 'Convite para o DUDE',
-            text: 'Você foi convidado para acompanhar um paciente.',
-            url: inviteLink
-          });
-        } catch (err) {
-          navigator.clipboard.writeText(inviteLink);
-          alert('Convite copiado.');
-        }
-      } else {
-        navigator.clipboard.writeText(inviteLink);
-        alert('Convite copiado.');
-      }
-    }
-  }
-
-  return (
+const newReturn = `return (
     <div className="fixed inset-0 z-[100] flex flex-col sm:justify-center items-center bg-gray-50 sm:bg-black/40 sm:backdrop-blur-sm sm:p-4">
       <div className="relative w-full h-[100dvh] sm:max-w-lg bg-gray-50 sm:rounded-[2rem] sm:shadow-2xl flex flex-col sm:h-auto sm:max-h-[85vh] overflow-hidden sm:border sm:border-gray-100/50">
         
@@ -272,4 +186,6 @@ export function FamilyModal({ familyId, currentUserId, onClose }: FamilyModalPro
       </div>
     </div>
   );
-}
+}`;
+
+fs.writeFileSync('src/components/ui/FamilyModal.tsx', codeBeforeReturn + newReturn);
