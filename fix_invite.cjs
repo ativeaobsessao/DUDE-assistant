@@ -1,4 +1,7 @@
-import React, { useEffect, useState } from 'react';
+const fs = require('fs');
+let code = fs.readFileSync('src/pages/InviteScreen.tsx', 'utf8');
+
+const newContent = `import React, { useEffect, useState } from 'react';
 import { supabase } from '../services/supabase';
 import { acceptFamilyInvite } from '../services/api';
 import { Spinner } from '../components/ui/Spinner';
@@ -139,3 +142,6 @@ export function InviteScreen({ token }: { token: string }) {
     </div>
   );
 }
+`;
+
+fs.writeFileSync('src/pages/InviteScreen.tsx', newContent);
