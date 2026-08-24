@@ -91,9 +91,10 @@ export function FamilyModal({ familyId, currentUserId, onClose }: FamilyModalPro
 
   return (
     <>
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
-      <div className="bg-gray-50 rounded-2xl w-full max-w-lg shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
-        <div className="flex justify-between items-center p-4 bg-white border-b border-gray-100">
+    <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/40 backdrop-blur-sm">
+      <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
+        <div className="relative transform overflow-hidden rounded-3xl bg-gray-50 text-left shadow-2xl transition-all w-full max-w-lg flex flex-col max-h-[85vh] border border-gray-100/50">
+        <div className="flex justify-between items-center px-6 py-5 bg-white border-b border-gray-100">
           <div>
             <h3 className="text-lg font-bold text-gray-900">Família e Convites</h3>
             <p className="text-xs text-gray-500">Pessoas com acesso às informações deste paciente.</p>
@@ -183,13 +184,15 @@ export function FamilyModal({ familyId, currentUserId, onClose }: FamilyModalPro
             </>
           )}
         </div>
+        </div>
       </div>
     </div>
 
     {/* INVITE GENERATION MODAL */}
     {showInviteModal && (
-      <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 p-4">
-        <div className="bg-white rounded-2xl w-full max-w-sm shadow-xl p-6 text-center">
+      <div className="fixed inset-0 z-[110] overflow-y-auto bg-black/40 backdrop-blur-sm">
+      <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
+        <div className="relative transform overflow-hidden rounded-3xl bg-white text-center shadow-2xl transition-all w-full max-w-sm flex flex-col max-h-[85vh] p-6 border border-gray-100/50">
           
           {!inviteLink ? (
             <>
@@ -250,6 +253,7 @@ export function FamilyModal({ familyId, currentUserId, onClose }: FamilyModalPro
             </>
           )}
 
+        </div>
         </div>
       </div>
     )}
