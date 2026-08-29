@@ -136,6 +136,21 @@ export async function createDailyClosure(familyId: string, patientId: string, da
   return true;
 }
 
+
+export async function deleteDailyClosure(patientId: string, date: string): Promise<boolean> {
+  const { error } = await supabase
+    .from('daily_closures')
+    .delete()
+    .eq('patient_id', patientId)
+    .eq('date', date);
+
+  if (error) {
+    console.error('Error deleting daily closure:', error);
+    return false;
+  }
+  return true;
+}
+
 // --- LOGS ---
 
 export async function getHistoricalMealLogs(patientId: string, beforeDate: string): Promise<any[]> {

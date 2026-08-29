@@ -11,7 +11,8 @@ import {
   getPatientPhotoUrl,
   getMealPhotoUrl,
   getDailyClosure,
-  createDailyClosure
+  createDailyClosure,
+  deleteDailyClosure
 } from '../services/api';
 import { supabase } from '../services/supabase';
 import { getLocalDateString, getCurrentLocalTime, formatFriendlyDate, getWeekdayName, formatTime, formatDateToTime } from '../utils/date';
@@ -22,12 +23,14 @@ import { MealModal } from '../components/meals/MealModal';
 import { UserProfile } from '../components/ui/UserProfile';
 import { MedicationModal } from '../components/medications/MedicationModal';
 import type { TimelineEvent, MealEventData, MedicationEventData } from '../types/timeline';
+import { Unlock } from 'lucide-react';
 
 export function TodayScreen({ onTabChange }: { onTabChange?: (tab: 'today' | 'history' | 'routine') => void }) {
   const [loading, setLoading] = useState(true);
   const [dailyClosure, setDailyClosure] = useState<any>(null);
   const [showClosureModal, setShowClosureModal] = useState(false);
   const [closingDay, setClosingDay] = useState(false);
+  const [reopeningDay, setReopeningDay] = useState(false);
   const [profile, setProfile] = useState<any>(null);
   const [patient, setPatient] = useState<any>(null);
   const [patientPhoto, setPatientPhoto] = useState<string | null>(null);
@@ -236,6 +239,23 @@ export function TodayScreen({ onTabChange }: { onTabChange?: (tab: 'today' | 'hi
   const isAllEventsCompleted = events.length > 0 && resolvedEventsCount === events.length;
 
   
+
+  const handleReopenDay = async () => {
+    if (!patient || reopeningDay) return;
+    setReopeningDay(true);
+    try {
+      const success = await deleteDailyClosure(patient.id, localDate);
+      if (success) {
+        setDailyClosure(null);
+        refreshTimeline(patient.id, localDate);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setReopeningDay(false);
+    }
+  };
+
   const handleCloseDay = async () => {
     if (!patient || !profile) return;
     setClosingDay(true);
@@ -346,6 +366,19 @@ export function TodayScreen({ onTabChange }: { onTabChange?: (tab: 'today' | 'hi
               <p className="text-sm text-gray-500 mt-1">
                 Encerrado por {dailyClosure.closed_by_profile?.name || 'Familiar'} às {formatDateToTime(dailyClosure.closed_at)}
               </p>
+              
+              <button
+                onClick={handleReopenDay}
+                disabled={reopeningDay}
+                className="mt-6 inline-flex items-center justify-center text-sm font-medium text-gray-500 hover:text-gray-700 bg-gray-50 hover:bg-gray-100 px-5 py-2.5 rounded-2xl transition-all active:scale-95 border border-gray-200 disabled:opacity-50 w-full sm:w-auto"
+              >
+                {reopeningDay ? (
+                  <Spinner className="w-4 h-4 mr-2" />
+                ) : (
+                  <Unlock className="w-4 h-4 mr-2" />
+                )}
+                {reopeningDay ? 'Reabrindo...' : 'Desfazer e reabrir dia'}
+              </button>
             </div>
           ) : isAllEventsCompleted ? (
             <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-5 flex flex-col items-center text-center">
