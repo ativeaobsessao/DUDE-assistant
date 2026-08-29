@@ -172,8 +172,10 @@ function HistoryDayGroup({
   onEditMed,
   onCloseDay,
   isClosingDay,
+  onOpenDayEdit,
 }: {
   day: DayData;
+  onOpenDayEdit: () => void;
   onEditMeal: (meal: HistoryMealEntry) => void;
   onEditMed: (med: HistoryMedEntry) => void;
   onCloseDay?: (date: string) => void;
@@ -262,6 +264,17 @@ function HistoryDayGroup({
             </div>
           )}
 
+          {/* Edit button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenDayEdit();
+            }}
+            className="w-full flex items-center justify-center gap-2 py-2.5 mt-2 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 active:bg-gray-100 rounded-xl text-sm font-medium transition-all shadow-sm"
+          >
+            Editar registros deste dia
+          </button>
+
           {/* Meals section */}
           {meals.length > 0 && (
             <div className="space-y-3">
@@ -343,6 +356,7 @@ export function HistoryScreen({ onTabChange }: { onTabChange?: (tab: 'today' | '
   // Modal state — med editing
   const [selectedMed, setSelectedMed] = useState<{ med: HistoryMedEntry; dateStr: string } | null>(null);
   const [closingDateStr, setClosingDateStr] = useState<string | null>(null);
+  const [editDay, setEditDay] = useState<{ dateStr: string; friendlyDate: string } | null>(null);
 
   // All hooks declared before any conditional return ✓
   useEffect(() => {
@@ -577,6 +591,7 @@ export function HistoryScreen({ onTabChange }: { onTabChange?: (tab: 'today' | '
                 onEditMed={(med) => setSelectedMed({ med, dateStr: day.dateStr })}
                 onCloseDay={handleCloseDay}
                 isClosingDay={closingDateStr === day.dateStr}
+                onOpenDayEdit={() => setEditDay({ dateStr: day.dateStr, friendlyDate: formatFriendlyDate(day.dateStr) })}
               />
             ))
           )}
@@ -606,6 +621,20 @@ export function HistoryScreen({ onTabChange }: { onTabChange?: (tab: 'today' | '
           profileId={profile.id}
           eventDate={selectedMed.dateStr}
           onSuccess={() => { loadData(); setSelectedMed(null); }}
+        />
+      )}
+      {/* Day Edit Modal */}
+      {editDay && patient && profile && (
+        <DayEditModal
+          isOpen={!!editDay}
+          onClose={() => setEditDay(null)}
+          dateStr={editDay.dateStr}
+          friendlyDate={editDay.friendlyDate}
+          patientId={patient.id}
+          profileId={profile.id}
+          onSuccess={() => {
+            loadData();
+          }}
         />
       )}
     </MainLayout>
