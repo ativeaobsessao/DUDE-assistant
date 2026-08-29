@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { supabase } from './services/supabase';
 import { getPatient, getCurrentProfile } from './services/api';
 import { LoginScreen } from './pages/Login';
@@ -17,7 +17,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [needsSetup, setNeedsSetup] = useState(false);
   const [needsContextSelection, setNeedsContextSelection] = useState(false);
-  const [hasCheckedContext, setHasCheckedContext] = useState(false);
+  const hasCheckedContextRef = useRef(false);
   const [currentTab, setCurrentTab] = useState<'today' | 'history' | 'routine'>('today');
 
   useEffect(() => {
@@ -61,12 +61,12 @@ export default function App() {
         return;
       }
 
-      if (!hasCheckedContext) {
+      if (!hasCheckedContextRef.current) {
         try {
           const memberships = await getMyFamilyMemberships();
           if (memberships.length === 0) {
             setNeedsSetup(true);
-            setHasCheckedContext(true);
+            hasCheckedContextRef.current = true;
           } else {
             setNeedsContextSelection(true);
           }
@@ -113,7 +113,7 @@ export default function App() {
       <ContextSelectorScreen 
         onSelect={() => {
           setNeedsContextSelection(false);
-          setHasCheckedContext(true);
+          hasCheckedContextRef.current = true;
           setLoading(true);
           checkPatient();
         }} 
