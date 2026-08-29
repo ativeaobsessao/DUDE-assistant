@@ -18,9 +18,9 @@ export function InviteScreen({ token }: { token: string }) {
       
       // If we are logged in AND we just came from a signup flow (pending_invite exists),
       // we can automatically accept it.
-      const pending = sessionStorage.getItem('pending_invite');
+      const pending = localStorage.getItem('pending_invite');
       if (s && pending === token) {
-         sessionStorage.removeItem('pending_invite');
+         localStorage.removeItem('pending_invite');
          handleAccept();
       } else {
          setLoading(false);
@@ -65,7 +65,7 @@ export function InviteScreen({ token }: { token: string }) {
   function handleAction() {
     if (!session) {
       // Redirect to create account
-      sessionStorage.setItem('pending_invite', token);
+      localStorage.setItem('pending_invite', token);
       window.location.href = '/';
     } else {
       // Already logged in, just accept
@@ -74,7 +74,7 @@ export function InviteScreen({ token }: { token: string }) {
   }
 
   function cancel() {
-    sessionStorage.removeItem('pending_invite');
+    localStorage.removeItem('pending_invite');
     window.location.href = '/';
   }
 

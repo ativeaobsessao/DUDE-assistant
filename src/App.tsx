@@ -47,9 +47,9 @@ export default function App() {
 
   async function checkPatient() {
     try {
-      const pendingInvite = sessionStorage.getItem('pending_invite');
+      const pendingInvite = localStorage.getItem('pending_invite');
       if (pendingInvite) {
-        sessionStorage.removeItem('pending_invite');
+        localStorage.removeItem('pending_invite');
         window.location.href = `/invite/${pendingInvite}`;
         return;
       }
@@ -62,7 +62,18 @@ export default function App() {
       }
 
       if (!hasCheckedContext) {
-        setNeedsContextSelection(true);
+        try {
+          const memberships = await getMyFamilyMemberships();
+          if (memberships.length === 0) {
+            setNeedsSetup(true);
+            setHasCheckedContext(true);
+          } else {
+            setNeedsContextSelection(true);
+          }
+        } catch (err) {
+          console.error(err);
+          setNeedsContextSelection(true);
+        }
         setLoading(false);
         return;
       }

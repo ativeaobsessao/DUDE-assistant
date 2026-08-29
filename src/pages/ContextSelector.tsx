@@ -34,7 +34,8 @@ export function ContextSelectorScreen({ onSelect }: { onSelect: () => void }) {
           });
         }
       }
-      setPatients(loadedPatients);
+      const uniquePatients = Array.from(new Map(loadedPatients.map(p => [p.id, p])).values());
+      setPatients(uniquePatients);
     } catch (err: any) {
       setError(err.message || 'Erro ao carregar pacientes');
     } finally {
