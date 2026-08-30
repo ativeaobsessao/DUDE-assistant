@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { supabase } from './services/supabase';
-import { getPatient, getCurrentProfile } from './services/api';
+import { getPatient, getCurrentProfile, getPatientPhotoUrl } from './services/api';
 import { LoginScreen } from './pages/Login';
 const TodayScreen = React.lazy(() => import('./pages/Today').then(m => ({ default: m.TodayScreen })));
 const RoutineScreen = React.lazy(() => import('./pages/Routine').then(m => ({ default: m.RoutineScreen })));
@@ -17,6 +17,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [needsSetup, setNeedsSetup] = useState(false);
   const [needsContextSelection, setNeedsContextSelection] = useState(false);
+  const [initialPatients, setInitialPatients] = useState<any[] | null>(null);
   const hasCheckedContextRef = useRef(false);
   const [currentTab, setCurrentTab] = useState<'today' | 'history' | 'routine'>('today');
 
@@ -54,32 +55,66 @@ export default function App() {
         return;
       }
 
+      if (!hasCheckedContextRef.current) {
+        const [prof, memberships] = await Promise.all([
+          getCurrentProfile(),
+          getMyFamilyMemberships()
+        ]);
+        
+        if (!prof || memberships.length === 0) {
+          setNeedsSetup(true);
+          hasCheckedContextRef.current = true;
+          setLoading(false);
+          return;
+        }
+
+        // Prefetch heavy routes in background
+        import('./pages/Today');
+        import('./pages/Routine');
+        import('./pages/History');
+
+        // Resolve patients for ContextSelector instantly
+        const loadedPatientsUnfiltered = await Promise.all(
+          memberships.map(async (m) => {
+            const pat = await getPatient(m.family_id);
+            if (!pat) return null;
+            let picUrl = null;
+            if (pat.photo_url) {
+              picUrl = await getPatientPhotoUrl(pat.id, pat.photo_url);
+            }
+            return {
+              id: pat.id,
+              name: pat.name,
+              photo: picUrl,
+              familyId: m.family_id,
+              gender: pat.gender
+            };
+          })
+        );
+        const loadedPatients = loadedPatientsUnfiltered.filter((p) => p !== null) as any;
+        const uniquePatients = Array.from(new Map(loadedPatients.map((p: any) => [p.id, p])).values());
+        
+        setInitialPatients(uniquePatients);
+        setNeedsContextSelection(true);
+        setLoading(false);
+        return;
+      }
+
       const prof = await getCurrentProfile();
       if (!prof) {
         setNeedsSetup(true);
         setLoading(false);
         return;
       }
-
-      if (!hasCheckedContextRef.current) {
-        try {
-          const memberships = await getMyFamilyMemberships();
-          if (memberships.length === 0) {
-            setNeedsSetup(true);
-            hasCheckedContextRef.current = true;
-          } else {
-            setNeedsContextSelection(true);
-          }
-        } catch (err) {
-          console.error(err);
-          setNeedsContextSelection(true);
-        }
-        setLoading(false);
-        return;
-      }
-
+      
       const pat = await getPatient(prof.family_id);
       setNeedsSetup(!pat);
+      
+      // Prefetch heavy routes in background
+      import('./pages/Today');
+      import('./pages/Routine');
+      import('./pages/History');
+      
     } catch (err) {
       console.error('Error checking patient:', err);
       setNeedsSetup(true);
@@ -111,6 +146,7 @@ export default function App() {
   if (needsContextSelection) {
     return (
       <ContextSelectorScreen 
+        initialPatients={initialPatients || undefined}
         onSelect={() => {
           setNeedsContextSelection(false);
           hasCheckedContextRef.current = true;

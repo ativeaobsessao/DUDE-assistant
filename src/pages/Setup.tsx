@@ -1,4 +1,5 @@
 // @ts-nocheck
+
 import React, { useState, useRef } from 'react';
 import { Camera, Image as ImageIcon, X } from 'lucide-react';
 import { Button } from '../components/ui/Button';
@@ -13,7 +14,6 @@ interface SetupScreenProps {
 
 export function SetupScreen({ onComplete }: SetupScreenProps) {
   const [name, setName] = useState('');
-  const [gender, setGender] = useState<'M' | 'F' | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [showPhotoMenu, setShowPhotoMenu] = useState(false);
@@ -48,7 +48,6 @@ export function SetupScreen({ onComplete }: SetupScreenProps) {
       const patientData: any = {
         family_id: profile.family_id,
         name: name.trim(),
-        gender: gender,
       };
 
       const patient = await createPatient(patientData);

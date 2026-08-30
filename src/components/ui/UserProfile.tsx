@@ -1,8 +1,9 @@
 // @ts-nocheck
+
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../../services/supabase';
-import { LogOut, User, Camera, Lock, UserPen, Users } from 'lucide-react';
+import { LogOut, Camera, Lock, UserPen, Users } from 'lucide-react';
 import { FamilyModal } from './FamilyModal';
 import { getCurrentProfile } from '../../services/api';
 

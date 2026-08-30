@@ -15,9 +15,9 @@ import {
   deleteDailyClosure
 } from '../services/api';
 import { supabase } from '../services/supabase';
-import { getLocalDateString, getCurrentLocalTime, formatFriendlyDate, getWeekdayName, formatTime, formatDateToTime } from '../utils/date';
+import { getLocalDateString, getCurrentLocalTime, formatFriendlyDate, getWeekdayName, formatDateToTime } from '../utils/date';
 import { Spinner } from '../components/ui/Spinner';
-import { Badge } from '../components/ui/Badge';
+
 import { TimelineItem } from '../components/timeline/TimelineItem';
 import { MealModal } from '../components/meals/MealModal';
 import { UserProfile } from '../components/ui/UserProfile';

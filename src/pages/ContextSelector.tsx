@@ -4,15 +4,17 @@ import { supabase } from '../services/supabase';
 import { Spinner } from '../components/ui/Spinner';
 import { User, LogOut } from 'lucide-react';
 
-export function ContextSelectorScreen({ onSelect }: { onSelect: () => void }) {
-  const [loading, setLoading] = useState(true);
-  const [patients, setPatients] = useState<Array<{ id: string, name: string, photo: string | null, familyId: string, gender: string | null }>>([]);
+export function ContextSelectorScreen({ onSelect, initialPatients }: { onSelect: () => void, initialPatients?: any[] }) {
+  const [loading, setLoading] = useState(!initialPatients);
+  const [patients, setPatients] = useState<Array<{ id: string, name: string, photo: string | null, familyId: string, gender: string | null }>>(initialPatients || []);
   const [error, setError] = useState('');
   const [switching, setSwitching] = useState<string | null>(null);
 
   useEffect(() => {
-    loadPatients();
-  }, []);
+    if (!initialPatients) {
+      loadPatients();
+    }
+  }, [initialPatients]);
 
   async function loadPatients() {
     try {

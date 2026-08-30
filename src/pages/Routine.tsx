@@ -1,6 +1,6 @@
 import { formatTime } from '../utils/date';
 import React, { useEffect, useState } from 'react';
-import { Settings, Plus, Edit2, Camera } from 'lucide-react';
+import { Plus, Edit2, Camera } from 'lucide-react';
 import { MainLayout } from '../layouts/MainLayout';
 import { 
   getCurrentProfile, 

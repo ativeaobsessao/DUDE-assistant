@@ -1,4 +1,5 @@
 // @ts-nocheck
+
 import { supabase } from './supabase';
 import type { Database } from '../types/database.types';
 
@@ -12,6 +13,21 @@ type MealLog = Database['public']['Tables']['meal_logs']['Row'];
 type MedicationLog = Database['public']['Tables']['medication_logs']['Row'];
 
 // --- AUTH & PROFILES ---
+
+
+// Simple request cache to prevent duplicate fetches on mount
+const cache = new Map<string, { data: any, timestamp: number }>();
+const CACHE_TTL = 5000; // 5 seconds
+
+async function cachedFetch<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
+  const cached = cache.get(key);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.data;
+  }
+  const data = await fetcher();
+  cache.set(key, { data, timestamp: Date.now() });
+  return data;
+}
 
 export async function getCurrentUser() {
   const { data: { user }, error } = await supabase.auth.getUser();
@@ -287,7 +303,7 @@ export async function updateMedicationLog(id: string, log: Database['public']['T
 
 // --- STORAGE ---
 
-export async function getPatientPhotoUrl(patientId: string, path: string): Promise<string | null> {
+export async function getPatientPhotoUrl(_patientId: string, path: string): Promise<string | null> {
   if (!path) return null;
   const { data, error } = await supabase.storage.from('patient-profile').createSignedUrl(path, 60 * 60 * 24); // 24 hours
   if (error) {
@@ -478,6 +494,8 @@ export async function revokeFamilyInvite(inviteId: string) {
 export async function setActiveFamily(familyId: string) {
   const { error } = await supabase.rpc('set_active_family', { p_family_id: familyId });
   if (error) throw error;
+  // Invalidate cache since family changed
+  cache.clear();
 }
 
 export async function removeFamilyMember(userId: string, familyId: string) {
