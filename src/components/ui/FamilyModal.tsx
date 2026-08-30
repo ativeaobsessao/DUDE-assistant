@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Users, UserPlus, Trash2, Link } from 'lucide-react';
 import { Spinner } from './Spinner';
 import { Button } from './Button';
-import { getFamilyMembers, getFamilyInvites, createFamilyInvite, revokeFamilyInvite } from '../../services/api';
+import { getFamilyMembers, getFamilyInvites, createFamilyInvite, revokeFamilyInvite, removeFamilyMember } from '../../services/api';
 
 interface FamilyModalProps {
   familyId: string;
@@ -20,6 +20,7 @@ export function FamilyModal({ familyId, currentUserId, onClose }: FamilyModalPro
   
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteLink, setInviteLink] = useState('');
+  const [memberToRemove, setMemberToRemove] = useState<any>(null);
   
   const isAdmin = members.find(m => m.user_id === currentUserId)?.role === 'ADMIN';
 
@@ -52,6 +53,21 @@ export function FamilyModal({ familyId, currentUserId, onClose }: FamilyModalPro
       loadData();
     } catch (err: any) {
       setError(err.message || 'Não foi possível gerar o convite.');
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+
+  async function handleConfirmRemove() {
+    if (!memberToRemove) return;
+    setActionLoading(true);
+    try {
+      await removeFamilyMember(memberToRemove.user_id, familyId);
+      setMemberToRemove(null);
+      loadData();
+    } catch (err: any) {
+      setError(err.message || 'Erro ao remover membro.');
     } finally {
       setActionLoading(false);
     }
@@ -204,6 +220,17 @@ export function FamilyModal({ familyId, currentUserId, onClose }: FamilyModalPro
                               </p>
                             </div>
                           </div>
+                          
+                          {isAdmin && m.user_id !== currentUserId && (
+                            <button
+                              onClick={() => setMemberToRemove(m)}
+                              disabled={actionLoading}
+                              className="p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors active:scale-95"
+                              title="Remover Membro"
+                            >
+                              <Trash2 className="w-5 h-5" />
+                            </button>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -270,6 +297,39 @@ export function FamilyModal({ familyId, currentUserId, onClose }: FamilyModalPro
           </div>
         )}
       </div>
+
+      {/* Remove Member Confirmation Modal */}
+      {memberToRemove && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-[2rem] w-full max-w-sm p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-5">
+              <Trash2 className="w-8 h-8 text-red-600" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 text-center mb-2">Remover Membro?</h3>
+            <p className="text-sm text-gray-500 text-center mb-8 font-medium px-2">
+              Esta pessoa perderá o acesso à rotina e ao histórico deste paciente imediatamente. Esta ação não pode ser desfeita.
+            </p>
+            
+            <div className="space-y-3">
+              <Button 
+                onClick={handleConfirmRemove}
+                disabled={actionLoading}
+                className="w-full py-4 text-base font-bold rounded-2xl bg-red-600 hover:bg-red-700 text-white border-transparent shadow-md active:scale-[0.98] transition-transform"
+              >
+                {actionLoading ? <Spinner className="text-white w-5 h-5" /> : 'Remover Acesso'}
+              </Button>
+              <Button 
+                onClick={() => setMemberToRemove(null)}
+                disabled={actionLoading}
+                variant="ghost"
+                className="w-full py-4 text-base font-bold rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-700 active:scale-[0.98] transition-transform"
+              >
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
