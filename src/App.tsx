@@ -2,10 +2,10 @@ import React, { useEffect, useState, useRef } from 'react';
 import { supabase } from './services/supabase';
 import { getPatient, getCurrentProfile } from './services/api';
 import { LoginScreen } from './pages/Login';
-import { TodayScreen } from './pages/Today';
-import { RoutineScreen } from './pages/Routine';
-import { SetupScreen } from './pages/Setup';
-import { HistoryScreen } from './pages/History';
+const TodayScreen = React.lazy(() => import('./pages/Today').then(m => ({ default: m.TodayScreen })));
+const RoutineScreen = React.lazy(() => import('./pages/Routine').then(m => ({ default: m.RoutineScreen })));
+const SetupScreen = React.lazy(() => import('./pages/Setup').then(m => ({ default: m.SetupScreen })));
+const HistoryScreen = React.lazy(() => import('./pages/History').then(m => ({ default: m.HistoryScreen })));
 import { Spinner } from './components/ui/Spinner';
 import { InviteScreen } from './pages/InviteScreen';
 import { ContextSelectorScreen } from './pages/ContextSelector';
@@ -122,19 +122,40 @@ export default function App() {
   }
 
   if (needsSetup) {
-    return <SetupScreen onComplete={() => {
-      setNeedsSetup(false);
-      setCurrentTab('routine');
-    }} />;
+    return <React.Suspense fallback={
+      <div className="flex h-[100dvh] items-center justify-center bg-gray-50">
+        <Spinner className="w-8 h-8 text-gray-900" />
+      </div>
+    }>
+      <SetupScreen onComplete={() => { setNeedsSetup(false); setCurrentTab('routine'); }} />
+    </React.Suspense>;
   }
 
   if (currentTab === 'routine') {
-    return <RoutineScreen onTabChange={setCurrentTab} />;
+    return <React.Suspense fallback={
+      <div className="flex h-[100dvh] items-center justify-center bg-gray-50">
+        <Spinner className="w-8 h-8 text-gray-900" />
+      </div>
+    }>
+      <RoutineScreen onTabChange={setCurrentTab} />
+    </React.Suspense>;
   }
   
   if (currentTab === 'history') {
-    return <HistoryScreen onTabChange={setCurrentTab} />;
+    return <React.Suspense fallback={
+      <div className="flex h-[100dvh] items-center justify-center bg-gray-50">
+        <Spinner className="w-8 h-8 text-gray-900" />
+      </div>
+    }>
+      <HistoryScreen onTabChange={setCurrentTab} />
+    </React.Suspense>;
   }
 
-  return <TodayScreen onTabChange={setCurrentTab} />;
+  return <React.Suspense fallback={
+      <div className="flex h-[100dvh] items-center justify-center bg-gray-50">
+        <Spinner className="w-8 h-8 text-gray-900" />
+      </div>
+    }>
+      <TodayScreen onTabChange={setCurrentTab} />
+    </React.Suspense>;
 }

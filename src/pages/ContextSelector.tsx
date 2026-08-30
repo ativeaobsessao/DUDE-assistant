@@ -17,23 +17,28 @@ export function ContextSelectorScreen({ onSelect }: { onSelect: () => void }) {
   async function loadPatients() {
     try {
       const memberships = await getMyFamilyMemberships();
-      const loadedPatients = [];
       
-      for (const m of memberships) {
-        const pat = await getPatient(m.family_id);
-        if (pat) {
+      // PARALLEL FETCHING
+      const loadedPatientsUnfiltered = await Promise.all(
+        memberships.map(async (m) => {
+          const pat = await getPatient(m.family_id);
+          if (!pat) return null;
+          
           let picUrl = null;
           if (pat.photo_url) {
             picUrl = await getPatientPhotoUrl(pat.id, pat.photo_url);
           }
-          loadedPatients.push({
+          
+          return {
             id: pat.id,
             name: pat.name,
             photo: picUrl,
             familyId: m.family_id
-          });
-        }
-      }
+          };
+        })
+      );
+      
+      const loadedPatients = loadedPatientsUnfiltered.filter((p) => p !== null) as any;
       const uniquePatients = Array.from(new Map(loadedPatients.map(p => [p.id, p])).values());
       setPatients(uniquePatients);
     } catch (err: any) {
