@@ -356,12 +356,13 @@ export function HistoryScreen({ onTabChange }: { onTabChange?: (tab: 'today' | '
   // Modal state — med editing
   const [selectedMed, setSelectedMed] = useState<{ med: HistoryMedEntry; dateStr: string } | null>(null);
   const [closingDateStr, setClosingDateStr] = useState<string | null>(null);
+  const [daysLimit, setDaysLimit] = useState(14);
   const [editDay, setEditDay] = useState<{ dateStr: string; friendlyDate: string } | null>(null);
 
   // All hooks declared before any conditional return ✓
   useEffect(() => {
     loadData();
-  }, []);
+  }, [daysLimit]);
 
   async function handleCloseDay(dateStr: string) {
     if (!profile || !patient) return;
@@ -371,7 +372,7 @@ export function HistoryScreen({ onTabChange }: { onTabChange?: (tab: 'today' | '
       await loadData();
     } catch (err) {
       console.error(err);
-      alert('Erro ao encerrar o dia.');
+      console.error('Erro ao encerrar o dia.');
     } finally {
       setClosingDateStr(null);
     }
@@ -391,10 +392,14 @@ export function HistoryScreen({ onTabChange }: { onTabChange?: (tab: 'today' | '
       // today's date string — used as strict upper bound
       const today = getLocalDateString();
 
+      const startDateObj = new Date();
+      startDateObj.setDate(startDateObj.getDate() - daysLimit);
+      const startDate = startDateObj.toISOString().split('T')[0];
+
       const [rawMealLogs, rawMedLogs, rawClosures] = await Promise.all([
-        getHistoricalMealLogs(pat.id, today),
-        getHistoricalMedicationLogs(pat.id, today),
-        getHistoricalDailyClosures(pat.id, today),
+        getHistoricalMealLogs(pat.id, today, startDate),
+        getHistoricalMedicationLogs(pat.id, today, startDate),
+        getHistoricalDailyClosures(pat.id, today, startDate),
       ]);
 
       // Build closures map: date → closure object

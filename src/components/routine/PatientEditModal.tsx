@@ -4,7 +4,7 @@ import { BottomSheet } from '../ui/BottomSheet';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Spinner } from '../ui/Spinner';
-import { updatePatient, uploadPatientPhoto } from '../../services/api';
+import { updatePatient, uploadPatientPhoto, deleteStorageFile } from '../../services/api';
 import { compressImage } from '../../utils/image';
 
 interface PatientEditModalProps {
@@ -66,6 +66,11 @@ export function PatientEditModal({ isOpen, onClose, patient, currentPhotoUrl, on
         const compressed = await compressImage(photoFile);
         const fileName = `${Date.now()}.jpg`;
         const uploadData = await uploadPatientPhoto(patient.id, compressed, fileName);
+        
+        if (patient.photo_url) {
+          await deleteStorageFile('patient-profile', patient.photo_url);
+        }
+        
         updateData.photo_url = (uploadData as any).path;
       } else if (photoPreview === null) {
         // If there is no file and preview is explicitly cleared (null), remove the photo

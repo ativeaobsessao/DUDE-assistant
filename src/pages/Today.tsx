@@ -267,7 +267,7 @@ export function TodayScreen({ onTabChange }: { onTabChange?: (tab: 'today' | 'hi
         setShowClosureModal(false);
         refreshTimeline(patient.id, localDate);
       } else {
-        alert("Erro ao encerrar o dia.");
+        console.error("Erro ao encerrar o dia.");
       }
     } catch (err) {
       console.error(err);

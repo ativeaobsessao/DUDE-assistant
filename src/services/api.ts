@@ -99,15 +99,21 @@ export async function getDailyClosure(patientId: string, date: string): Promise<
   return data || null;
 }
 
-export async function getHistoricalDailyClosures(patientId: string, beforeDate: string): Promise<any[]> {
+export async function getHistoricalDailyClosures(patientId: string, beforeDate: string, startDate?: string): Promise<any[]> {
   // Use .lt to exclude today from history (same rule as meal/medication logs)
   // FK confirmed: daily_closures_closed_by_fkey (auto-named by PostgreSQL from migration 0005)
-  const { data, error } = await supabase
+  let query = supabase
     .from('daily_closures')
     .select('*, closed_by_profile:profiles!daily_closures_closed_by_fkey(name)')
     .eq('patient_id', patientId)
     .lt('date', beforeDate)
     .order('date', { ascending: false });
+
+  if (startDate) {
+    query = query.gte('date', startDate);
+  }
+
+  const { data, error } = await query;
     
   if (error) {
     console.error('[getHistoricalDailyClosures] error code:', error.code, 'message:', error.message, 'details:', error.details);
@@ -153,15 +159,21 @@ export async function deleteDailyClosure(patientId: string, date: string): Promi
 
 // --- LOGS ---
 
-export async function getHistoricalMealLogs(patientId: string, beforeDate: string): Promise<any[]> {
+export async function getHistoricalMealLogs(patientId: string, beforeDate: string, startDate?: string): Promise<any[]> {
   // Use strict .lt (less-than) to exclude today — today belongs to TodayScreen
-  const { data, error } = await supabase
+  let query = supabase
     .from('meal_logs')
     .select('*, creator:profiles!meal_logs_created_by_fkey(name), updater:profiles!meal_logs_updated_by_fkey(name), meal_config:meal_configs(*)')
     .eq('patient_id', patientId)
     .lt('event_date', beforeDate)
     .order('event_date', { ascending: false })
     .order('meal_time', { ascending: true, nullsFirst: false });
+
+  if (startDate) {
+    query = query.gte('event_date', startDate);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error('[getHistoricalMealLogs] error:', error);
@@ -170,15 +182,21 @@ export async function getHistoricalMealLogs(patientId: string, beforeDate: strin
   return data ?? [];
 }
 
-export async function getHistoricalMedicationLogs(patientId: string, beforeDate: string): Promise<any[]> {
+export async function getHistoricalMedicationLogs(patientId: string, beforeDate: string, startDate?: string): Promise<any[]> {
   // Use strict .lt (less-than) to exclude today
-  const { data, error } = await supabase
+  let query = supabase
     .from('medication_logs')
     .select('*, medication:medications(*, period:medication_periods(*)), creator:profiles!medication_logs_created_by_fkey(name), updater:profiles!medication_logs_updated_by_fkey(name)')
     .eq('patient_id', patientId)
     .lt('event_date', beforeDate)
     .order('event_date', { ascending: false })
     .order('created_at', { ascending: true });
+
+  if (startDate) {
+    query = query.gte('event_date', startDate);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error('[getHistoricalMedicationLogs] error:', error);
@@ -301,7 +319,13 @@ export async function uploadMealPhoto(patientId: string, file: File, fileName: s
   return data || [];
 }
 
-// --- SETUP & ROUTINE MUTATIONS ---
+export async function deleteStorageFile(bucket: string, path: string) {
+  if (!path) return;
+  const { error } = await supabase.storage.from(bucket).remove([path]);
+  if (error) console.error(`Error deleting ${path} from ${bucket}:`, error);
+}
+
+// --- SETUP // --- SETUP & ROUTINE MUTATIONS --- ROUTINE MUTATIONS ---
 
 export async function createPatient(patient: Database['public']['Tables']['patients']['Insert']) {
   const { data, error } = await supabase.from('patients').insert(patient as any).select().single();

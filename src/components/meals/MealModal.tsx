@@ -6,7 +6,7 @@ import { Input } from '../ui/Input';
 import { Spinner } from '../ui/Spinner';
 import { cn } from '../../utils/cn';
 import { compressImage } from '../../utils/image';
-import { createMealLog, updateMealLog, uploadMealPhoto } from '../../services/api';
+import { createMealLog, updateMealLog, uploadMealPhoto, deleteStorageFile } from '../../services/api';
 import type { MealEventData } from '../../types/timeline';
 
 interface MealModalProps {
@@ -61,6 +61,9 @@ export function MealModal({ isOpen, onClose, event, patientId, profileId, eventD
       let photoUrl = event.log?.photo_url || null;
       
       if (!photoPreview && !photoFile) {
+        if (event.log?.photo_url) {
+          await deleteStorageFile('meal-records', event.log.photo_url);
+        }
         photoUrl = null;
       }
 
@@ -69,6 +72,12 @@ export function MealModal({ isOpen, onClose, event, patientId, profileId, eventD
           const compressed = await compressImage(photoFile, 1920); // Better quality
           const fileName = `${eventDate}_${event.id}_${Date.now()}.jpg`;
           const uploadData = await uploadMealPhoto(patientId, compressed, fileName);
+          
+          // Delete old photo if it exists to prevent storage bloat
+          if (event.log?.photo_url) {
+            await deleteStorageFile('meal-records', event.log.photo_url);
+          }
+          
           photoUrl = (uploadData as any).path;
         } catch (uploadErr) {
           console.error("Photo upload failed:", uploadErr);
