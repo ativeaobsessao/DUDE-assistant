@@ -17,6 +17,7 @@ interface PatientEditModalProps {
 
 export function PatientEditModal({ isOpen, onClose, patient, currentPhotoUrl, onSuccess }: PatientEditModalProps) {
   const [name, setName] = useState('');
+  const [gender, setGender] = useState<'M' | 'F' | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [showPhotoMenu, setShowPhotoMenu] = useState(false);
@@ -29,6 +30,7 @@ export function PatientEditModal({ isOpen, onClose, patient, currentPhotoUrl, on
   useEffect(() => {
     if (isOpen && patient) {
       setName(patient.name);
+      setGender(patient.gender || null);
       setPhotoPreview(currentPhotoUrl);
       setPhotoFile(null);
       setShowPhotoMenu(false);
@@ -57,6 +59,7 @@ export function PatientEditModal({ isOpen, onClose, patient, currentPhotoUrl, on
     try {
       const updateData: any = {
         name: name.trim(),
+        gender: gender,
       };
 
       if (photoFile) {
@@ -90,6 +93,24 @@ export function PatientEditModal({ isOpen, onClose, patient, currentPhotoUrl, on
           <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome" />
         </div>
 
+
+        <div className="space-y-3">
+          <label className="text-sm font-semibold text-gray-900 block text-left">Como devemos nos referir?</label>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setGender('M')}
+              className={`flex-1 py-3 px-4 rounded-xl border font-medium transition-all ${gender === 'M' ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' : 'bg-white text-gray-700 border-gray-200 hover:border-indigo-300'}`}
+            >
+              Ele (O)
+            </button>
+            <button
+              onClick={() => setGender('F')}
+              className={`flex-1 py-3 px-4 rounded-xl border font-medium transition-all ${gender === 'F' ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' : 'bg-white text-gray-700 border-gray-200 hover:border-indigo-300'}`}
+            >
+              Ela (A)
+            </button>
+          </div>
+        </div>
         <div className="space-y-3">
           <label className="text-sm font-semibold text-gray-900 block text-left">Foto <span className="text-gray-400 font-normal">(Opcional)</span></label>
           

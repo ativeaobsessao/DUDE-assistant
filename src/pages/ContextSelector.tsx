@@ -6,7 +6,7 @@ import { User, LogOut } from 'lucide-react';
 
 export function ContextSelectorScreen({ onSelect }: { onSelect: () => void }) {
   const [loading, setLoading] = useState(true);
-  const [patients, setPatients] = useState<Array<{ id: string, name: string, photo: string | null, familyId: string }>>([]);
+  const [patients, setPatients] = useState<Array<{ id: string, name: string, photo: string | null, familyId: string, gender: string | null }>>([]);
   const [error, setError] = useState('');
   const [switching, setSwitching] = useState<string | null>(null);
 
@@ -33,7 +33,8 @@ export function ContextSelectorScreen({ onSelect }: { onSelect: () => void }) {
             id: pat.id,
             name: pat.name,
             photo: picUrl,
-            familyId: m.family_id
+            familyId: m.family_id,
+            gender: pat.gender
           };
         })
       );
@@ -72,12 +73,34 @@ export function ContextSelectorScreen({ onSelect }: { onSelect: () => void }) {
     <div className="flex min-h-[100dvh] flex-col bg-gray-50 items-center py-16 px-6">
       <div className="w-full max-w-sm space-y-12">
         <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-            Quem você vai acompanhar hoje?
-          </h1>
-          <p className="text-gray-500 mt-3 font-medium">
-            Selecione um paciente para continuar
-          </p>
+          {patients.length > 1 ? (
+            <>
+              <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+                Como está a sua família hoje?
+              </h1>
+              <p className="text-gray-500 mt-3 font-medium">
+                Escolha quem você vai acompanhar agora.
+              </p>
+            </>
+          ) : patients.length === 1 ? (
+            <>
+              <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+                {patients[0].gender === 'F' ? 'Como está a ' : patients[0].gender === 'M' ? 'Como está o ' : 'Como está a rotina de '}{patients[0].name}?
+              </h1>
+              <p className="text-gray-500 mt-3 font-medium">
+                Veja como está a rotina {patients[0].gender === 'F' ? 'dela' : patients[0].gender === 'M' ? 'dele' : 'hoje'}.
+              </p>
+            </>
+          ) : (
+            <>
+              <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+                Bem-vindo
+              </h1>
+              <p className="text-gray-500 mt-3 font-medium">
+                Nenhum paciente disponível.
+              </p>
+            </>
+          )}
         </div>
 
         {error && (
