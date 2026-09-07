@@ -6,6 +6,7 @@ import { Spinner } from '../components/ui/Spinner';
 
 export function LoginScreen() {
   const [isSignUp, setIsSignUp] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -18,6 +19,20 @@ export function LoginScreen() {
     setError('');
     setSuccessMsg('');
     setLoading(true);
+
+    if (isForgotPassword) {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin
+      });
+
+      if (resetError) {
+        setError('Erro ao solicitar recuperação. Verifique o e-mail digitado.');
+      } else {
+        setSuccessMsg('Se este e-mail estiver cadastrado, você receberá um link de recuperação em instantes.');
+      }
+      setLoading(false);
+      return;
+    }
 
     if (isSignUp) {
       if (!name) {
@@ -64,10 +79,10 @@ export function LoginScreen() {
             <span className="text-4xl text-gray-400">👵</span>
           </div>
           <h2 className="mt-4 text-xl font-semibold text-gray-900">
-            {isSignUp ? 'Criar Nova Conta' : 'Entrar na Família'}
+            {isForgotPassword ? 'Recuperar Senha' : (isSignUp ? 'Criar Nova Conta' : 'Entrar na Família')}
           </h2>
           <p className="mt-2 text-sm text-gray-500">
-            {isSignUp ? 'Cadastre-se para começar' : 'Como está a vó hoje?'}
+            {isForgotPassword ? 'Enviaremos um link para redefinir sua senha' : (isSignUp ? 'Cadastre-se para começar' : 'Como está a vó hoje?')}
           </p>
         </div>
 
@@ -84,7 +99,7 @@ export function LoginScreen() {
           )}
           
           <div className="space-y-4">
-            {isSignUp && (
+            {!isForgotPassword && isSignUp && (
               <Input
                 type="text"
                 placeholder="Seu nome"
@@ -100,13 +115,15 @@ export function LoginScreen() {
               onChange={(e) => setEmail(e.target.value)}
               required
             />
-            <Input
-              type="password"
-              placeholder="Sua senha"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+            {!isForgotPassword && (
+              <Input
+                type="password"
+                placeholder="Sua senha"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            )}
           </div>
 
           <Button 
@@ -114,20 +131,40 @@ export function LoginScreen() {
             className="w-full" 
             disabled={loading}
           >
-            {loading ? <Spinner className="text-white" /> : (isSignUp ? 'Criar conta' : 'Entrar')}
+            {loading ? <Spinner className="text-white" /> : (isForgotPassword ? 'Enviar link' : (isSignUp ? 'Criar conta' : 'Entrar'))}
           </Button>
 
-          <div className="text-sm">
+          <div className="flex flex-col space-y-3 text-sm">
+            {!isForgotPassword && !isSignUp && (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsForgotPassword(true);
+                  setError('');
+                  setSuccessMsg('');
+                }}
+                className="text-indigo-600 hover:text-indigo-800 font-medium self-end -mt-4 mb-2"
+              >
+                Esqueceu a senha?
+              </button>
+            )}
+
             <button
               type="button"
               onClick={() => {
-                setIsSignUp(!isSignUp);
+                if (isForgotPassword) {
+                  setIsForgotPassword(false);
+                } else {
+                  setIsSignUp(!isSignUp);
+                }
                 setError('');
                 setSuccessMsg('');
               }}
               className="text-gray-500 hover:text-gray-900 font-medium"
             >
-              {isSignUp ? 'Já possui conta? Entre aqui' : 'Ainda não tem conta? Crie aqui'}
+              {isForgotPassword 
+                ? 'Voltar para o login' 
+                : (isSignUp ? 'Já possui conta? Entre aqui' : 'Ainda não tem conta? Crie aqui')}
             </button>
           </div>
         </form>

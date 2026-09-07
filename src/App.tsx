@@ -9,14 +9,15 @@ const HistoryScreen = React.lazy(() => import('./pages/History').then(m => ({ de
 import { Spinner } from './components/ui/Spinner';
 import { InviteScreen } from './pages/InviteScreen';
 import { ContextSelectorScreen } from './pages/ContextSelector';
+import { ResetPasswordScreen } from './pages/ResetPassword';
 import { getMyFamilyMemberships } from './services/api';
-
 
 export default function App() {
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [needsSetup, setNeedsSetup] = useState(false);
   const [needsContextSelection, setNeedsContextSelection] = useState(false);
+  const [isRecoveringPassword, setIsRecoveringPassword] = useState(false);
   const [initialPatients, setInitialPatients] = useState<any[] | null>(null);
   const hasCheckedContextRef = useRef(false);
   const [currentTab, setCurrentTab] = useState<'today' | 'history' | 'routine'>('today');
@@ -25,6 +26,7 @@ export default function App() {
     // Check existing session on mount
     supabase.auth.getSession().then(async ({ data: { session: s } }) => {
       setSession(s);
+      // We don't check for recovery in getSession directly, we rely on the hash event or auth listener
       if (s) {
         await checkPatient();
       } else {
@@ -34,10 +36,13 @@ export default function App() {
 
     // Listen for auth state changes (login / logout)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, s) => {
+      if (_event === 'PASSWORD_RECOVERY') {
+        setIsRecoveringPassword(true);
+      }
       setSession(s);
-      if (s) {
+      if (s && _event !== 'PASSWORD_RECOVERY') {
         await checkPatient();
-      } else {
+      } else if (!s) {
         setNeedsSetup(false);
         setLoading(false);
       }
@@ -141,6 +146,18 @@ export default function App() {
 
   if (!session) {
     return <LoginScreen />;
+  }
+
+  if (isRecoveringPassword) {
+    return (
+      <ResetPasswordScreen 
+        onComplete={() => {
+          setIsRecoveringPassword(false);
+          setLoading(true);
+          checkPatient();
+        }} 
+      />
+    );
   }
 
   if (needsContextSelection) {
